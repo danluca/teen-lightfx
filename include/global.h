@@ -1,8 +1,8 @@
 // Copyright (c) 2023,2024 by Dan Luca. All rights reserved.
 //
 
-#ifndef ARDUINO_LIGHTFX_GLOBAL_H
-#define ARDUINO_LIGHTFX_GLOBAL_H
+#ifndef TEEN_LIGHTFX_GLOBAL_H
+#define TEEN_LIGHTFX_GLOBAL_H
 
 #include <Arduino.h>
 #include <FastLED.h>
@@ -22,6 +22,7 @@
 #define LED_EFFECT_ID_SIZE  6
 #define MAX_EFFECTS_HISTORY 20
 #define AUDIO_HIST_BINS_COUNT   10
+#define ALARM_DURATION  (SECS_PER_HOUR + 30*SECS_PER_MIN)       //1 hour and 30min alarm duration
 
 const uint16_t turnOffSeq[] PROGMEM = {1, 1, 2, 2, 2, 3, 3, 3, 5, 5, 5, 7, 7, 7, 7, 10};
 extern const char csAutoFxRoll[];
@@ -36,6 +37,7 @@ extern const uint8_t dimmed;
 //extern const uint16_t FRAME_SIZE;
 extern const CRGB BKG;
 extern const uint8_t maxChanges;
+extern const uint8_t minBrightness;
 enum OpMode { TurnOff, Chase };
 enum EffectState {Setup, Running, WindDownPrep, WindDown, TransitionBreakPrep, TransitionBreak, Idle};
 extern CRGB leds[NUM_PIXELS];
@@ -76,4 +78,4 @@ extern volatile uint16_t speed;
 extern volatile uint16_t curPos;
 
 
-#endif //ARDUINO_LIGHTFX_GLOBAL_H
+#endif //TEEN_LIGHTFX_GLOBAL_H

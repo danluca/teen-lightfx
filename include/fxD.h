@@ -1,48 +1,12 @@
 //
 // Copyright 2023,2024 by Dan Luca. All rights reserved
 //
-#ifndef LIGHTFX_FXD_H
-#define LIGHTFX_FXD_H
+#ifndef TEEN_LIGHTFX_FXD_H
+#define TEEN_LIGHTFX_FXD_H
 
 #include "efx_setup.h"
 
 namespace FxD {
-    class FxD1 : public LedEffect {
-    public:
-        FxD1();
-
-        void setup() override;
-
-        void run() override;
-
-        bool windDown() override;
-
-        JsonObject & describeConfig(JsonArray &json) const override;
-
-        void ChangeMe();
-
-        void confetti();
-
-        uint8_t selectionWeight() const override;
-    };
-
-    class FxD2 : public LedEffect {
-    public:
-        FxD2();
-
-        void setup() override;
-
-        void run() override;
-
-        bool windDown() override;
-
-        JsonObject & describeConfig(JsonArray &json) const override;
-
-        void dot_beat();
-
-        uint8_t selectionWeight() const override;
-    };
-
     class FxD3 : public LedEffect {
     public:
         FxD3();
@@ -77,7 +41,6 @@ namespace FxD {
 
         uint8_t selectionWeight() const override;
     };
-
 
     struct ripple {
         uint8_t rpBright;
@@ -118,4 +81,4 @@ namespace FxD {
     };
 }
 
-#endif //LIGHTFX_FXD_H
+#endif //TEEN_LIGHTFX_FXD_H

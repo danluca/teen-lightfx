@@ -47,6 +47,9 @@ The system is designed as a platform that hosts a number of light effects with a
 Each light effect is encapsulated in a subclass of a base abstract class that defines the API. At bootstrap, each effect auto-registers itself into the global light effects
 registry in order to make itself available.
 
+A web server allows configuration from within the **local network**. Note the server is single-threaded, rather simple and lacking security protections. 
+Hence, it is (very) wise to restrict the server user access to the local network only.
+
 ### Multi-threading
 Several dedicated threads are defined in the system:
 * Main thread runs the Web Server

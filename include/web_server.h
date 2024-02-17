@@ -1,8 +1,8 @@
 //
 // Copyright (c) 2023,2024 by Dan Luca. All rights reserved
 //
-#ifndef LIGHTFX_WEB_SERVER_H
-#define LIGHTFX_WEB_SERVER_H
+#ifndef TEEN_LIGHTFX_WEB_SERVER_H
+#define TEEN_LIGHTFX_WEB_SERVER_H
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -34,4 +34,4 @@ namespace web {
     void dispatch();
 }
 
-#endif //LIGHTFX_WEB_SERVER_H
+#endif //TEEN_LIGHTFX_WEB_SERVER_H

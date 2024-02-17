@@ -2,8 +2,8 @@
 // Copyright (c) 2023,2024 by Dan Luca. All rights reserved.
 //
 
-#ifndef ARDUINO_LIGHTFX_TIMEUTIL_H
-#define ARDUINO_LIGHTFX_TIMEUTIL_H
+#ifndef TEEN_LIGHTFX_TIMEUTIL_H
+#define TEEN_LIGHTFX_TIMEUTIL_H
 
 #include <WiFiNINA.h>
 #include <NTPClient.h>
@@ -31,4 +31,4 @@ bool time_setup();
 time_t curUnixTime();
 bool ntp_sync();
 
-#endif //ARDUINO_LIGHTFX_TIMEUTIL_H
+#endif //TEEN_LIGHTFX_TIMEUTIL_H

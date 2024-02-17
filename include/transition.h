@@ -1,8 +1,8 @@
 // Copyright (c) 2023,2024 by Dan Luca. All rights reserved.
 //
 
-#ifndef ARDUINO_LIGHTFX_TRANSITION_H
-#define ARDUINO_LIGHTFX_TRANSITION_H
+#ifndef TEEN_LIGHTFX_TRANSITION_H
+#define TEEN_LIGHTFX_TRANSITION_H
 
 #include <Arduino.h>
 #include "global.h"
@@ -46,4 +46,4 @@ protected:
 
 extern EffectTransition transEffect;
 
-#endif //ARDUINO_LIGHTFX_TRANSITION_H
+#endif //TEEN_LIGHTFX_TRANSITION_H

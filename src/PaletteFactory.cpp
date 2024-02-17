@@ -46,6 +46,13 @@ extern const TProgmemRGBPalette16 ChristmasColors_p FL_PROGMEM = {
          0x83E22B, 0x1493FF, 0xC6C4FF, 0xDC143C
  };
 
+ extern const TProgmemPalette16 SleepyColors_p FL_PROGMEM = {
+         0xc2893e,0xc49d02,  0xcfbd1b, 0xd6d66b,
+         0x54c414, 0x24d64e, 0x86b090, 0xd8dbc5,
+         0x4bd195, 0x1cd6ba, 0xabdbd4, 0x49ebeb,
+         0x49d0eb, 0xb242eb, 0xdd42eb, 0xeb42c0
+ };
+
 CRGBPalette16 PaletteFactory::mainPalette(const time_t time) {
     adjustHoliday(time);
     switch (holiday) {
@@ -78,6 +85,10 @@ CRGBPalette16 PaletteFactory::secondaryPalette(const time_t time) {
         default:
             return PartierColorsCompl_p;
     }
+}
+
+CRGBPalette16 PaletteFactory::sleepPalette() {
+    return SleepyColors_p;
 }
 
 bool PaletteFactory::isAuto() const {

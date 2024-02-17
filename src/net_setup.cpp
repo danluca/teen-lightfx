@@ -9,6 +9,10 @@ using namespace colTheme;
 const char ssid[] PROGMEM = WF_SSID;
 const char pass[] PROGMEM = WF_PSW;
 
+const CRGB CLR_ALL_OK = CRGB::Indigo;
+const CRGB CLR_SETUP_IN_PROGRESS = CRGB::Green;
+const CRGB CLR_SETUP_ERROR = CRGB::Red;
+
 WiFiUDP Udp;  // A UDP instance to let us send and receive packets over UDP
 
 /**
@@ -39,7 +43,7 @@ bool wifi_connect() {
     uint8_t wifiStatus = WiFi.status();
     while (wifiStatus != WL_CONNECTED) {
         if (attCount > 60)
-            updateStateLED(CRGB::Red);
+            updateStateLED((uint32_t)CLR_SETUP_ERROR);
         Log.infoln(F("Attempting to connect..."));
 
         // Connect to WPA/WPA2 network
@@ -83,8 +87,7 @@ bool imu_setup() {
     // initialize the IMU (Inertial Measurement Unit)
     if (!IMU.begin()) {
         Log.errorln(F("Failed to initialize IMU!"));
-        updateStateLED(CRGB::Red);
-        //rtos::ThisThread::terminate();
+        updateStateLED((uint32_t)CLR_SETUP_ERROR);
         while (true) yield();
     }
     Log.infoln(F("IMU sensor OK"));
@@ -124,7 +127,7 @@ bool wifi_check() {
  */
 void wifi_reconnect() {
     resetSysStatus(SYS_STATUS_WIFI);
-    updateStateLED(CRGB::Orange);
+    updateStateLED((uint32_t)CLR_SETUP_IN_PROGRESS);
     server.clearWriteError();
     WiFiClient client = server.available();
     if (client) client.stop();
@@ -132,35 +135,24 @@ void wifi_reconnect() {
     WiFi.disconnect();
     WiFi.end();     //without this, the re-connected wifi has closed socket clients
     delay(2000);    //let disconnect state settle
-    if (wifi_connect())
-        updateStateLED(CRGB::Indigo);
-    //NVIC_SystemReset();
+    wifi_connect();
 }
 
 void wifi_loop() {
-    EVERY_N_MINUTES(7) {
+    EVERY_N_MINUTES(10) {
         if (!wifi_check()) {
+            updateStateLED((uint32_t)CLR_SETUP_ERROR);
             Log.warningln(F("WiFi connection unusable/lost - reconnecting..."));
             wifi_reconnect();
         }
 
         if (!timeClient.isTimeSet()) {
             if (time_setup())
-                updateStateLED(CRGB::Indigo);
+                updateStateLED((uint32_t)CLR_ALL_OK);
             else
-                updateStateLED(CRGB::Green);
+                updateStateLED((uint32_t)CLR_SETUP_ERROR);
         }
         Log.infoln(F("System status: %X"), getSysStatus());
-    }
-    EVERY_N_HOURS(12) {
-        Holiday oldHday = paletteFactory.getHoliday();
-        Holiday hDay = paletteFactory.adjustHoliday();
-#ifndef DISABLE_LOGGING
-        if (oldHday == hDay)
-            Log.infoln(F("Current holiday remains %s"), holidayToString(hDay));
-        else
-            Log.infoln(F("Current holiday adjusted from %s to %s"), holidayToString(oldHday), holidayToString(hDay));
-#endif
     }
     webserver();
     yield();

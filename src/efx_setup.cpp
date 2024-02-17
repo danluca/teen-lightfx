@@ -18,6 +18,7 @@ const char csCurFx[] = "curFx";
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
 const CRGB BKG = CRGB::Black;
 const uint8_t maxChanges = 24;
+const uint8_t minBrightness = dim8_raw(22);
 volatile bool fxBump = false;
 volatile uint16_t speed = 100;
 volatile uint16_t curPos = 0;
@@ -30,7 +31,7 @@ CRGBSet others(leds, tpl.size(), NUM_PIXELS-1); //start and end indexes are incl
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = 224;
+uint8_t brightness = dim8_raw(128);     //start with 50%
 uint8_t stripBrightness = brightness;
 uint8_t colorIndex = 0;
 uint8_t lastColorIndex = 0;
@@ -624,6 +625,17 @@ LedEffect *EffectRegistry::getCurrentEffect() const {
     return effects[currentEffect];
 }
 
+uint16_t EffectRegistry::nextEffectPos(const char *id) {
+    for (size_t x = 0; x < effects.size(); x++) {
+        if (strcmp(id, effects[x]->name()) == 0) {
+            currentEffect = x;
+            transitionEffect();
+            return lastEffectRun;
+        }
+    }
+    return 0;
+}
+
 uint16_t EffectRegistry::nextEffectPos(uint16_t efx) {
     currentEffect = capu(efx, effectsCount-1);
     transitionEffect();
@@ -674,6 +686,14 @@ uint16_t EffectRegistry::registerEffect(LedEffect *effect) {
     effectsCount = effects.size();
     Log.infoln(F("Effect [%s] registered successfully at index %d"), effect->name(), effectsCount-1);
     return effectsCount-1;
+}
+
+LedEffect *EffectRegistry::findEffect(const char *id) {
+    for (auto &fx : effects) {
+        if (strcmp(id, fx->name()) == 0)
+            return fx;
+    }
+    return nullptr;
 }
 
 /**
@@ -985,4 +1005,25 @@ void fx_run() {
 
     fxRegistry.loop();
     yield();
+}
+
+// FxSchedule functions
+void wakeupOn() {
+    fxRegistry.nextEffectPos("FXB2");
+}
+
+void wakeupOff() {
+    quiet();
+}
+
+void sleepOn() {
+    fxRegistry.nextEffectPos("FXA1");
+}
+
+void sleepOff() {
+
+}
+
+void quiet() {
+    fxRegistry.nextEffectPos("FXA2");
 }

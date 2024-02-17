@@ -2,8 +2,8 @@
 // Copyright (c) 2023,2024 by Dan Luca. All rights reserved.
 //
 
-#ifndef ARDUINO_LIGHTFX_UTIL_H
-#define ARDUINO_LIGHTFX_UTIL_H
+#ifndef TEEN_LIGHTFX_UTIL_H
+#define TEEN_LIGHTFX_UTIL_H
 
 #include <Arduino.h>
 #include <Arduino_LSM6DSOX.h>
@@ -71,4 +71,4 @@ public:
     const_iterator end() const { return this->c.end(); }
 };
 
-#endif //ARDUINO_LIGHTFX_UTIL_H
+#endif //TEEN_LIGHTFX_UTIL_H

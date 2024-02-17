@@ -12,140 +12,14 @@ using namespace FxD;
 using namespace colTheme;
 
 //~ Effect description strings stored in flash
-const char fxd1Desc[] PROGMEM = "FXD1: Confetti D";
-const char fxd2Desc[] PROGMEM = "FXD2: dot beat";
 const char fxd3Desc[] PROGMEM = "FxD3: plasma";
 const char fxd4Desc[] PROGMEM = "FxD4: rainbow marching";
 const char fxd5Desc[] PROGMEM = "FxD5: ripples";
 
 void FxD::fxRegister() {
-    static FxD1 fxD1;
-    static FxD2 fxD2;
     static FxD3 fxD3;
     static FxD4 fxD4;
     static FxD5 fxD5;
-}
-
-/**
- * Confetti
- * By: Mark Kriegsman
- * Modified By: Andrew Tuline
- * Date: July 2015
- *
- * Confetti flashes colours within a limited hue. It's been modified from Mark's original to support a few variables. It's a simple, but great looking routine.
- */
-FxD1::FxD1() : LedEffect(fxd1Desc) {}
-
-void FxD1::setup() {
-    LedEffect::setup();
-
-    fade = 8;
-    hue = 50;
-    delta = 3;
-    saturation = 224;
-    brightness = 255;
-    hueDiff = 512;
-    speed = 30;
-}
-
-void FxD1::run() {
-    ChangeMe();                                                 // Check the demo loop for changes to the variables.
-
-    EVERY_N_MILLISECONDS(speed) {                           // FastLED based non-blocking speed to update/display the sequence.
-        confetti();
-        FastLED.show(stripBrightness);
-    }
-}
-
-JsonObject & FxD1::describeConfig(JsonArray &json) const {
-    JsonObject obj = LedEffect::describeConfig(json);
-    obj["localBright"] = brightness;
-    return obj;
-}
-
-
-void FxD1::confetti() {
-    // random colored speckles that blink in and fade smoothly
-    tpl.fadeToBlackBy(fade);                    // Low values = slower fade.
-    uint16_t pos = random16(tpl.size());    // Pick an LED at random.
-    //tpl[pos] += CHSV((hue + random16(hueDiff)) / 4 , saturation, localBright);  // I use 12 bits for hue so that the hue increment isn't too quick.
-    tpl[pos] += ColorFromPalette(palette, hue, brightness, LINEARBLEND);
-    hue = hue + delta;                                // It increments here.
-    replicateSet(tpl, others);
-}
-
-
-void FxD1::ChangeMe() {
-    static uint8_t secSlot = 0;
-    EVERY_N_SECONDS(5) {
-        switch (secSlot) {
-            case 0: delta=1; hue=192; saturation=255; fade=2; hueDiff=256; break;  // You can change values here, one at a time , or altogether.
-            case 1: delta=2; hue=128; fade=8; hueDiff=64; break;
-            case 2: delta=3; hue=random16(255); fade=1; hueDiff=16; break;
-            default: break;
-        }
-        secSlot = inc(secSlot, 1, 4);
-    }
-}
-
-bool FxD1::windDown() {
-    return transEffect.offSpots();
-}
-
-uint8_t FxD1::selectionWeight() const {
-    return 21;
-}
-
-// Fx D2
-/**
- * dots By: John Burroughs
- * Modified by: Andrew Tuline
- * Date: July, 2015
- *
- * Similar to dots by John Burroughs, but uses the FastLED beatsin8() function instead.
- */
-FxD2::FxD2() : LedEffect(fxd2Desc) {}
-
-void FxD2::setup() {
-    LedEffect::setup();
-    dotBpm = 21;
-    fade = 31;
-}
-
-void FxD2::run() {
-    EVERY_N_MILLISECONDS(75) {
-        dot_beat();
-        FastLED.show(stripBrightness);
-    }
-}
-
-JsonObject & FxD2::describeConfig(JsonArray &json) const {
-    JsonObject obj = LedEffect::describeConfig(json);
-    obj["bpm"] = dotBpm;
-    obj["fade"] = 255-fade;
-    return obj;
-}
-
-void FxD2::dot_beat() {
-    uint16_t inner = beatsin16(dotBpm, tpl.size()/4, tpl.size()/4*3);    // Move 1/4 to 3/4
-    uint16_t outer = beatsin16(dotBpm, 0, tpl.size()-1);               // Move entire length
-    uint16_t middle = beatsin16(dotBpm, tpl.size()/3, tpl.size()/3*2);   // Move 1/3 to 2/3
-
-    tpl[middle] = ColorFromPalette(palette, beatsin8(10));
-    tpl[inner] = ColorFromPalette(palette, beatsin8(11, 0, 255, 0, 127));
-    tpl[outer] = ColorFromPalette(palette, beatsin8(12, 0, 255, 0, 255));
-
-    tpl.nscale8(255-fade);                             // Fade the entire array. Or for just a few LED's, use  nscale8(&leds[2], 5, fadeVal);
-
-    replicateSet(tpl, others);
-}
-
-bool FxD2::windDown() {
-    return transEffect.offWipe(true);
-}
-
-uint8_t FxD2::selectionWeight() const {
-    return 20;
 }
 
 // Fx D3

@@ -2,8 +2,8 @@
 // Copyright 2023,2024 by Dan Luca. All rights reserved
 //
 
-#ifndef LIGHTFX_EFX_SETUP_H
-#define LIGHTFX_EFX_SETUP_H
+#ifndef TEEN_LIGHTFX_EFX_SETUP_H
+#define TEEN_LIGHTFX_EFX_SETUP_H
 
 #include <Arduino.h>
 #include "mic.h"
@@ -12,6 +12,7 @@
 #include "global.h"
 #include "util.h"
 #include "transition.h"
+#include "FxSchedule.h"
 #include "config.h"
 
 typedef void (*setupFunc)();
@@ -194,6 +195,8 @@ public:
 
     uint16_t nextEffectPos(uint16_t efx);
 
+    uint16_t nextEffectPos(const char* id);
+
     uint16_t nextEffectPos();
 
     uint16_t curEffectPos() const;
@@ -203,6 +206,8 @@ public:
     void transitionEffect() const;
 
     uint16_t registerEffect(LedEffect *effect);
+
+    LedEffect* findEffect(const char* id);
 
     uint16_t size() const;
 
@@ -224,4 +229,4 @@ extern EffectRegistry fxRegistry;
 const setupFunc categorySetup[] = {FxA::fxRegister, FxB::fxRegister, FxC::fxRegister, FxD::fxRegister, FxE::fxRegister, FxF::fxRegister, FxH::fxRegister, FxI::fxRegister, FxJ::fxRegister, FxK::fxRegister};
 
 
-#endif //LIGHTFX_EFX_SETUP_H
+#endif //TEEN_LIGHTFX_EFX_SETUP_H

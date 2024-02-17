@@ -1,8 +1,8 @@
 //
 // Copyright (c) 2023. by Dan Luca. All rights reserved.
 //
-#ifndef ARDUINO_LIGHTFX_PALETTEFACTORY_H
-#define ARDUINO_LIGHTFX_PALETTEFACTORY_H
+#ifndef TEEN_LIGHTFX_PALETTEFACTORY_H
+#define TEEN_LIGHTFX_PALETTEFACTORY_H
 
 #include "util.h"
 #include <FastLED.h>
@@ -15,6 +15,8 @@ namespace colTheme {
         CRGBPalette16 mainPalette(time_t time = 0);
 
         CRGBPalette16 secondaryPalette(time_t time = 0);
+
+        CRGBPalette16 sleepPalette();
 
         void setHoliday(Holiday hday);
 
@@ -34,4 +36,4 @@ namespace colTheme {
 
 extern colTheme::PaletteFactory paletteFactory;
 
-#endif //ARDUINO_LIGHTFX_PALETTEFACTORY_H
+#endif //TEEN_LIGHTFX_PALETTEFACTORY_H
