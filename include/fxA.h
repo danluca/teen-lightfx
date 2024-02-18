@@ -16,6 +16,8 @@ namespace FxA {
 
         void run() override;
 
+        void windDownPrep() override;
+
         uint8_t selectionWeight() const override;
 
         ~SleepLight() override = default;
@@ -32,6 +34,8 @@ namespace FxA {
         void setup() override;
 
         void run() override;
+
+        void windDownPrep() override;
 
         uint8_t selectionWeight() const override;
 

@@ -43,12 +43,18 @@ void SleepLight::run() {
         color++;
     }
     EVERY_N_MILLIS(100) {
-        FastLED.show(lightIntensity + beatsin8(7, 0, lerp8by8(5, 25, lightIntensity)));
+        //linear interpolation of beat amplitude - our raw light intensities are between 128 and 32
+        uint8_t variation = (brighten8_raw(lightIntensity) - 31)*(25-5)/(128-32);
+        FastLED.show(lightIntensity + beatsin8(7, 0, variation));
     }
 }
 
 uint8_t SleepLight::selectionWeight() const {
     return LedEffect::selectionWeight();
+}
+
+void SleepLight::windDownPrep() {
+    transEffect.prepare(SELECTOR_FADE);
 }
 
 // Quiet
@@ -70,4 +76,8 @@ uint8_t Quiet::selectionWeight() const {
 
 Quiet::Quiet() : LedEffect(fxa2Desc) {
     fxRegistry.registerEffect(this);
+}
+
+void Quiet::windDownPrep() {
+    transEffect.prepare(SELECTOR_FADE);
 }

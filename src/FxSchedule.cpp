@@ -137,13 +137,14 @@ void alarm_loop() {
         if (currentDay != day())
             setupAlarmSchedule();
         time_t time = now();
-        for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end(); it++) {
+        for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
             auto al = *it;
             if (al->value <= time) {
                 al->onEventHandler();
-                delete al;
                 scheduledAlarms.erase(it);
-            }
+                delete al;
+            } else
+                ++it;
         }
     }
 }
