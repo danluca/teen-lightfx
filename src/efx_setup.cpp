@@ -33,7 +33,8 @@ CRGBPalette16 targetPalette;
 OpMode mode = Chase;
 uint8_t brightness = dim8_raw(128);     //start with 50%
 uint8_t stripBrightness = brightness;
-uint8_t colorIndex = 0;
+bool partyMode = false;
+uint8_t colorIndex = 10;
 uint8_t lastColorIndex = 0;
 uint8_t fade = 8;
 uint8_t hue = 50;
@@ -129,7 +130,7 @@ void resetGlobals() {
     palette = paletteFactory.mainPalette();
     targetPalette = paletteFactory.secondaryPalette();
     mode = Chase;
-    brightness = 224;
+    brightness = dim8_raw(128);
     colorIndex = lastColorIndex = 0;
     curPos = 0;
     speed = 100;
@@ -962,8 +963,6 @@ void fx_setup() {
     //instantiate effect categories
     for (auto x : categorySetup)
         x();
-    //initialize ALL the effects configured in the functions above
-    //fxRegistry.setup();
     readState();
     transEffect.setup();
 
@@ -974,12 +973,22 @@ void fx_setup() {
 
 //Run currently selected effect -------
 void fx_run() {
+    EVERY_N_SECONDS(5) {
+        int hr = hour();
+        if (!partyMode && (hr > 22 || hr < 7)) {
+            if (fxBump) {
+                fxBump = false;
+                totalAudioBumps++;
+                fxRegistry.getCurrentEffect()->setup();
+            }
+        }
+    }
     EVERY_N_SECONDS(30) {
-//        if (fxBump) {
-//            fxRegistry.nextEffectPos();
-//            fxBump = false;
-//            totalAudioBumps++;
-//        }
+        if (partyMode && fxBump) {
+            fxRegistry.nextEffectPos();
+            fxBump = false;
+            totalAudioBumps++;
+        }
         float msmt = controllerVoltage();
         if (msmt < minVcc)
             minVcc = msmt;
@@ -996,10 +1005,12 @@ void fx_run() {
             maxTemp = msmt;
     }
     EVERY_N_MINUTES(7) {
-//        fxRegistry.nextRandomEffectPos();
-        random16_add_entropy(secRandom16());        //this may or may not help
-        shuffleIndexes(stripShuffleIndex, NUM_PIXELS);
-//        stripBrightness = adjustStripBrightness();
+        if (partyMode) {
+            fxRegistry.nextRandomEffectPos();
+            random16_add_entropy(secRandom16());        //this may or may not help
+            shuffleIndexes(stripShuffleIndex, NUM_PIXELS);
+            stripBrightness = adjustStripBrightness();
+        }
         saveState();
     }
 
@@ -1021,7 +1032,7 @@ void sleepOn() {
 }
 
 void sleepOff() {
-
+    quiet();
 }
 
 void quiet() {

@@ -89,6 +89,10 @@ void scheduleVacation(time_t time) {
 void scheduleNotHome(time_t time) {
     //no alarms for not being home
     scheduledAlarms.clear();
+    //ensure we have a scheduled alarm for quiet time
+    time_t startDay = previousMidnight(time);
+    time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
+    scheduledAlarms.push_back(new AlarmData {.value=upOff, .onEventHandler=sleepOff});
 }
 
 /**

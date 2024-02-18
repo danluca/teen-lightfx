@@ -22,7 +22,6 @@
 #define LED_EFFECT_ID_SIZE  6
 #define MAX_EFFECTS_HISTORY 20
 #define AUDIO_HIST_BINS_COUNT   10
-#define ALARM_DURATION  (SECS_PER_HOUR + 30*SECS_PER_MIN)       //1 hour and 30min alarm duration
 
 const uint16_t turnOffSeq[] PROGMEM = {1, 1, 2, 2, 2, 3, 3, 3, 5, 5, 5, 7, 7, 7, 7, 10};
 extern const char csAutoFxRoll[];
@@ -51,6 +50,7 @@ extern OpMode mode;
 extern uint8_t brightness;
 extern uint8_t stripBrightness;
 extern bool stripBrightnessLocked;
+extern bool partyMode;
 extern uint8_t colorIndex;
 extern uint8_t lastColorIndex;
 extern uint8_t fade;
