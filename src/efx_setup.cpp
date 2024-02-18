@@ -975,11 +975,11 @@ void fx_setup() {
 //Run currently selected effect -------
 void fx_run() {
     EVERY_N_SECONDS(30) {
-        if (fxBump) {
-            fxRegistry.nextEffectPos();
-            fxBump = false;
-            totalAudioBumps++;
-        }
+//        if (fxBump) {
+//            fxRegistry.nextEffectPos();
+//            fxBump = false;
+//            totalAudioBumps++;
+//        }
         float msmt = controllerVoltage();
         if (msmt < minVcc)
             minVcc = msmt;
@@ -996,10 +996,10 @@ void fx_run() {
             maxTemp = msmt;
     }
     EVERY_N_MINUTES(7) {
-        fxRegistry.nextRandomEffectPos();
+//        fxRegistry.nextRandomEffectPos();
         random16_add_entropy(secRandom16());        //this may or may not help
         shuffleIndexes(stripShuffleIndex, NUM_PIXELS);
-        stripBrightness = adjustStripBrightness();
+//        stripBrightness = adjustStripBrightness();
         saveState();
     }
 

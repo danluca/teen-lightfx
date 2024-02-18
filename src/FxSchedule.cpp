@@ -99,11 +99,21 @@ void setupAlarmSchedule() {
     //alarms for today
     time_t time = now();
     currentDay = day(time);
+    auto dow = static_cast<timeDayOfWeek_t>(weekday(time));
     uint16_t today = encodeMonthDay(time);
+    uint16_t tmrw = encodeMonthDay(time + SECS_PER_DAY);
     const Interval *interval = nullptr;
+    const Interval *weekend = nullptr;
+
+    if (dow == dowSaturday || dow == dowSunday) {
+        weekend = new Interval {.start=today, .end=tmrw, .type=DayOff};
+    }
     for (auto &i : schoolSchedule) {
         if (today >= i.start && today < i.end) {
-            interval = &i;
+            if (i.type == School && weekend != nullptr)
+                interval = weekend;
+            else
+                interval = &i;
             break;
         }
     }
@@ -115,16 +125,17 @@ void setupAlarmSchedule() {
             case NotHome: scheduleNotHome(time); break;
         }
     }
+    delete weekend;
 }
 
 void alarm_loop() {
     EVERY_N_SECONDS(60) {
         if (currentDay != day())
             setupAlarmSchedule();
-
+        time_t time = now();
         for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end(); it++) {
             auto al = *it;
-            if (al->value <= now()) {
+            if (al->value <= time) {
                 al->onEventHandler();
                 delete al;
                 scheduledAlarms.erase(it);
