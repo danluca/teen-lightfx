@@ -35,13 +35,15 @@ void SleepLight::run() {
     EVERY_N_SECONDS(1) {
         CRGBSet strip(leds, NUM_PIXELS);
         strip = ColorFromPalette(paletteFactory.sleepPalette(), color, brightness, LINEARBLEND);
-        FastLED.show(lightIntensity + beatsin8(7, 0, 25));
     }
     EVERY_N_MINUTES(2) {
         lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 3;
     }
     EVERY_N_SECONDS(5) {
         color++;
+    }
+    EVERY_N_MILLIS(100) {
+        FastLED.show(lightIntensity + beatsin8(7, 0, lerp8by8(5, 25, lightIntensity)));
     }
 }
 

@@ -28,6 +28,13 @@ CRGB leds[NUM_PIXELS];
 CRGBArray<NUM_PIXELS> frame;
 CRGBSet tpl(leds, FRAME_SIZE);                        //array length, indexes go from 0 to length-1
 CRGBSet others(leds, tpl.size(), NUM_PIXELS-1); //start and end indexes are inclusive
+//Room segments
+CRGBSet segUp(leds, SEG_UP_START, SEG_UP_END);
+CRGBSet segRight(leds, SEG_RIGHT_START, SEG_RIGHT_END);
+CRGBSet segFront(leds, SEG_FRONT_START, SEG_FRONT_END);
+CRGBSet segLeft(leds, SEG_LEFT_START, SEG_LEFT_END);
+CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
+
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
@@ -573,7 +580,7 @@ void blendOverlay(CRGBSet &blendLayer, const CRGBSet &topLayer) {
 
 /**
  * Adjust strip overall brightness according with the time of day - as follows:
- * <p>Up until 8pm use the max brightness - i.e. <code>BRIGHTNESS</code></p>
+ * <p>7am until 8pm use the max brightness - i.e. <code>BRIGHTNESS</code></p>
  * <p>Between 8pm-9pm - reduce to 80% of full brightness, i.e. scale with 204</p>
  * <p>Between 9-10pm - reduce to 60% of full brightness, i.e. scale with 152</p>
  * <p>After 10pm - reduce to 40% of full brightness, i.e. scale with 102</p>
@@ -582,7 +589,7 @@ uint8_t adjustStripBrightness() {
     if (!stripBrightnessLocked && isSysStatus(SYS_STATUS_WIFI)) {
         int hr = hour();
         fract8 scale;
-        if (hr < 8)
+        if (hr < 7)
             scale = 100;
         else if (hr < 20)
             scale = 0;

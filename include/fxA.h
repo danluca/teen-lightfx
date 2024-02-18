@@ -7,6 +7,7 @@
 #include "efx_setup.h"
 
 namespace FxA {
+
     class SleepLight : public LedEffect {
     public:
         SleepLight();
