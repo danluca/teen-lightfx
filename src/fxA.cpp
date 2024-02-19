@@ -12,8 +12,8 @@ using namespace FxA;
 using namespace colTheme;
 
 //~ Effect description strings stored in flash
-const char fxa1Desc[] PROGMEM = "FXA1: Sleep light";
-const char fxa2Desc[] PROGMEM = "FXA2: Quiet";
+const char fxa1Desc[] PROGMEM = FX_SLEEPLIGHT_ID ": Sleep light";
+const char fxa2Desc[] PROGMEM = FX_QUIET_ID ": Quiet";
 
 void FxA::fxRegister() {
     static SleepLight sleepLight;

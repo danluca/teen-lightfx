@@ -50,12 +50,12 @@ void scheduleSchoolDay(time_t time) {
     if ((time-startDay) < wakeupTimeOn) {
         time_t upOn = startDay + wakeupTimeOn;
         time_t upOff = startDay + wakeupTimeOff;
-        scheduledAlarms.push_back(new AlarmData{.value=upOn, .onEventHandler=wakeupOn});
-        scheduledAlarms.push_back(new AlarmData{.value=upOff, .onEventHandler=wakeupOff});
+        scheduledAlarms.push_back(new AlarmData{.value=upOn, .type=WAKEUP, .onEventHandler=wakeupOn});
+        scheduledAlarms.push_back(new AlarmData{.value=upOff, .type=ALARM_OFF, .onEventHandler=wakeupOff});
     }
     //sleep
     time_t bedTime = getBedTime(startDay);
-    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
     Log.infoln("Scheduled %d alarms for SchoolDay %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
@@ -67,12 +67,12 @@ void scheduleDayOff(time_t time) {
     if ((time-startDay) < wakeupTimeOn + DEFAULT_SLEEP_IN) {
         time_t upOn = startDay + wakeupTimeOn + DEFAULT_SLEEP_IN;
         time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
-        scheduledAlarms.push_back(new AlarmData{.value=upOn, .onEventHandler=wakeupOn});
-        scheduledAlarms.push_back(new AlarmData{.value=upOff, .onEventHandler=wakeupOff});
+        scheduledAlarms.push_back(new AlarmData{.value=upOn, .type=WAKEUP, .onEventHandler=wakeupOn});
+        scheduledAlarms.push_back(new AlarmData{.value=upOff, .type=ALARM_OFF, .onEventHandler=wakeupOff});
     }
     //sleep
     time_t bedTime = getBedTime(startDay);
-    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
     Log.infoln("Scheduled %d alarms for Day Off %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
@@ -84,12 +84,12 @@ void scheduleVacation(time_t time) {
     if ((time-startDay) < wakeupTimeOn + DEFAULT_SLEEP_IN) {
         time_t upOn = startDay + wakeupTimeOn + DEFAULT_SLEEP_IN;
         time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
-        scheduledAlarms.push_back(new AlarmData{.value=upOn, .onEventHandler=wakeupOn});
-        scheduledAlarms.push_back(new AlarmData{.value=upOff, .onEventHandler=wakeupOff});
+        scheduledAlarms.push_back(new AlarmData{.value=upOn, .type=WAKEUP, .onEventHandler=wakeupOn});
+        scheduledAlarms.push_back(new AlarmData{.value=upOff, .type=ALARM_OFF, .onEventHandler=wakeupOff});
     }
     //sleep
     time_t bedTime = getBedTime(startDay);
-    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
     Log.infoln("Scheduled %d alarms for Vacation Day %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
@@ -99,7 +99,7 @@ void scheduleNotHome(time_t time) {
     //ensure we have a scheduled alarm for quiet time
     time_t startDay = previousMidnight(time);
     time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
-    scheduledAlarms.push_back(new AlarmData {.value=upOff, .onEventHandler=sleepOff});
+    scheduledAlarms.push_back(new AlarmData {.value=upOff, .type=ALARM_OFF, .onEventHandler=sleepOff});
     Log.infoln("Scheduled 1 alarms for Not Home Day %y", time);
 }
 
@@ -137,6 +137,7 @@ void setupAlarmSchedule() {
             case NotHome: scheduleNotHome(time); break;
         }
     }
+    adjustCurrentEffect(time);
     delete weekend;
 }
 

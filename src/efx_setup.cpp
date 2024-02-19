@@ -92,7 +92,8 @@ void readState() {
         random16_add_entropy(seed);
 
         uint16_t fx = doc[csCurFx].as<uint16_t>();
-        fxRegistry.nextEffectPos(fx);
+        //fxRegistry.nextEffectPos(fx);
+        fxRegistry.nextEffectPos(FX_QUIET_ID);
 
         stripBrightness = doc[csStripBrightness].as<uint8_t>();
 
@@ -120,6 +121,33 @@ void saveState() {
     serializeJson(doc, str);
     if (!writeTextFile(stateFileName, &str))
         Log.errorln(F("Failed to create/write the status file %s"), stateFileName);
+}
+
+void adjustCurrentEffect(time_t time) {
+    //figure out the current effect - the default effect is quiet, but if we are past midnight before wakeup, we need to be sleep light
+    AlarmData *nextAlarm = nullptr;
+    time_t delta = 0;
+    for (const auto &al : scheduledAlarms) {
+        if (al->value >= time) {
+            time_t alDelta = al->value - time;
+            if (delta == 0 || alDelta < delta) {
+                delta = alDelta;
+                nextAlarm = al;
+            }
+        }
+    }
+    if (nextAlarm != nullptr) {
+        switch (nextAlarm->type) {
+            case BEDTIME:
+                fxRegistry.nextEffectPos(FX_QUIET_ID);
+                break;
+            case WAKEUP:
+                fxRegistry.nextEffectPos(FX_SLEEPLIGHT_ID);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 //~ General Utilities ---------------------------------------------------------
@@ -1035,7 +1063,7 @@ void wakeupOff() {
 }
 
 void sleepOn() {
-    fxRegistry.nextEffectPos("FXA1");
+    fxRegistry.nextEffectPos(FX_SLEEPLIGHT_ID);
 }
 
 void sleepOff() {
@@ -1043,5 +1071,5 @@ void sleepOff() {
 }
 
 void quiet() {
-    fxRegistry.nextEffectPos("FXA2");
+    fxRegistry.nextEffectPos(FX_QUIET_ID);
 }

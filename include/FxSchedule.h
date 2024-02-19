@@ -15,12 +15,17 @@ void wakeupOff();
 void sleepOn();
 void sleepOff();
 void quiet();
+void adjustCurrentEffect(time_t time);
 
 typedef void (*AlarmHandlerPtr)();  // alarm callback function typedef
 
 typedef enum DayType:uint8_t {
     School, DayOff, Vacation, NotHome
 } dtDayType;
+
+enum AlarmType {
+    WAKEUP, BEDTIME, ALARM_OFF
+};
 
 struct Interval {
     uint16_t start; //inclusive
@@ -30,6 +35,7 @@ struct Interval {
 
 struct AlarmData {
     const time_t value;
+    const AlarmType type;
     AlarmHandlerPtr const onEventHandler;
 };
 

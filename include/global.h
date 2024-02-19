@@ -22,6 +22,8 @@
 #define LED_EFFECT_ID_SIZE  6
 #define MAX_EFFECTS_HISTORY 20
 #define AUDIO_HIST_BINS_COUNT   10
+#define FX_SLEEPLIGHT_ID    "FXA1"
+#define FX_QUIET_ID         "FXA2"
 
 const uint16_t turnOffSeq[] PROGMEM = {1, 1, 2, 2, 2, 3, 3, 3, 5, 5, 5, 7, 7, 7, 7, 10};
 extern const char csAutoFxRoll[];

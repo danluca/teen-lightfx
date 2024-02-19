@@ -155,7 +155,6 @@ void wifi_loop() {
         Log.infoln(F("System status: %X"), getSysStatus());
     }
     webserver();
-    yield();
 }
 
 void printSuccessfulWifiStatus() {
