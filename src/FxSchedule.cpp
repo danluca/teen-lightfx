@@ -4,6 +4,7 @@
 #include "FxSchedule.h"
 #include "FastLED.h"
 #include "timeutil.h"
+#include "log.h"
 
 #define DEFAULT_WAKEUP_TIME_ON  (7*SECS_PER_HOUR)                           //7:00am wakeup
 #define DEFAULT_WAKEUP_TIME_OFF (DEFAULT_WAKEUP_TIME_ON + 30*SECS_PER_MIN)  //7:30am wakeup effect turn off
@@ -44,6 +45,7 @@ time_t getBedTime(time_t startDay) {
 void scheduleSchoolDay(time_t time) {
     time_t startDay = previousMidnight(time);
 
+    uint8_t curAlarmCount = scheduledAlarms.size();
     //wake-up if not passed it
     if ((time-startDay) < wakeupTimeOn) {
         time_t upOn = startDay + wakeupTimeOn;
@@ -54,11 +56,13 @@ void scheduleSchoolDay(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    Log.infoln("Scheduled %d alarms for SchoolDay %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleDayOff(time_t time) {
     time_t startDay = previousMidnight(time);
 
+    uint8_t curAlarmCount = scheduledAlarms.size();
     //wake-up if not passed it
     if ((time-startDay) < wakeupTimeOn + DEFAULT_SLEEP_IN) {
         time_t upOn = startDay + wakeupTimeOn + DEFAULT_SLEEP_IN;
@@ -69,11 +73,13 @@ void scheduleDayOff(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    Log.infoln("Scheduled %d alarms for Day Off %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleVacation(time_t time) {
     time_t startDay = previousMidnight(time);
 
+    uint8_t curAlarmCount = scheduledAlarms.size();
     //wake-up if not passed it
     if ((time-startDay) < wakeupTimeOn + DEFAULT_SLEEP_IN) {
         time_t upOn = startDay + wakeupTimeOn + DEFAULT_SLEEP_IN;
@@ -84,6 +90,7 @@ void scheduleVacation(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .onEventHandler=sleepOn});
+    Log.infoln("Scheduled %d alarms for Vacation Day %y", scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleNotHome(time_t time) {
@@ -93,6 +100,7 @@ void scheduleNotHome(time_t time) {
     time_t startDay = previousMidnight(time);
     time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
     scheduledAlarms.push_back(new AlarmData {.value=upOff, .onEventHandler=sleepOff});
+    Log.infoln("Scheduled 1 alarms for Not Home Day %y", time);
 }
 
 /**
@@ -140,6 +148,7 @@ void alarm_loop() {
         for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
             auto al = *it;
             if (al->value <= time) {
+                Log.infoln("Alarm triggered at %y for scheduled time %y", time, al->value);
                 al->onEventHandler();
                 scheduledAlarms.erase(it);
                 delete al;

@@ -398,6 +398,13 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     time["time"] = timeBuf;
     time["dst"] = isSysStatus(SYS_STATUS_DST);
     time["holiday"] = holidayToString(currentHoliday());      //time derived holiday
+    JsonArray alarms = time.createNestedArray("alarms");
+    for (const auto &al : scheduledAlarms) {
+        JsonObject jal = alarms.createNestedObject();
+        formatDateTime(timeBuf, al->value);
+        jal["alarmTime"] = timeBuf;
+        jal["taskPtr"] = (long)al->onEventHandler;
+    }
 
     snprintf(timeBuf, 9, "%2d.%02d.%02d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     doc["mbedVersion"] = timeBuf;

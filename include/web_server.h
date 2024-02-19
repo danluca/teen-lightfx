@@ -9,6 +9,7 @@
 #include <regex>
 #include "net_setup.h"
 #include "efx_setup.h"
+#include "FxSchedule.h"
 
 #include "index_html.h"
 #include "jquery_min_js.h"

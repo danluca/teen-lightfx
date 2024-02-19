@@ -111,6 +111,13 @@ void logExtraFormats(Print *_logOutput, const char fmt, va_list *args) {
             _logOutput->print('}');
             break;
         }
+        case 'y': {
+            time_t time = va_arg(*args, time_t);
+            char timeStr[20];
+            strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", localtime(&time));
+            _logOutput->print(timeStr);
+            break;
+        }
         default:
             _logOutput->print("n/s");
     }
