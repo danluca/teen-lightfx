@@ -103,6 +103,11 @@ void scheduleNotHome(time_t time) {
     Log.infoln("Scheduled 1 alarms for Not Home Day %y", time);
 }
 
+void logAlarms() {
+    for (const auto &al : scheduledAlarms)
+        Log.infoln("Alarm %X type %d scheduled for %y; handler %X", (long)al, al->type, al->value, (long)al->onEventHandler);
+}
+
 /**
  * Setup the default sleep/wake-up schedule for the school year
  * TODO: how to save and read from JSON?
@@ -139,6 +144,7 @@ void setupAlarmSchedule() {
     }
     adjustCurrentEffect(time);
     delete weekend;
+    logAlarms();
 }
 
 void alarm_loop() {
@@ -149,12 +155,23 @@ void alarm_loop() {
         for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
             auto al = *it;
             if (al->value <= time) {
-                Log.infoln("Alarm triggered at %y for scheduled time %y", time, al->value);
+                Log.infoln("Alarm %X type %d triggered at %y for scheduled time %y; handler %X", (long)al, al->type, time, al->value, (long)al->onEventHandler);
                 al->onEventHandler();
-                scheduledAlarms.erase(it);
+                it = scheduledAlarms.erase(it);
                 delete al;
             } else
                 ++it;
         }
+
+//        for (size_t x = 0; x < scheduledAlarms.size(); x++) {
+//            AlarmData *al = scheduledAlarms.front();
+//            scheduledAlarms.pop_front();
+//            if (al->value <= time) {
+//                Log.infoln("Alarm %X type %d triggered at %y for scheduled time %y; handler %X", (long)al, al->type, time, al->value, (long)al->onEventHandler);
+//                al->onEventHandler();
+//                delete al;
+//            } else
+//                scheduledAlarms.push_back(al);
+//        }
     }
 }

@@ -24,7 +24,9 @@ namespace FxA {
 
     protected:
         uint8_t lightIntensity{};
-        uint8_t color{};
+        uint8_t clrX{};
+        uint8_t lightVar{};
+        CRGB colorBuf{};
     };
 
     class Quiet : public LedEffect {

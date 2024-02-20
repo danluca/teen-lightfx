@@ -6,6 +6,7 @@
  * 
  */
 #include "fxA.h"
+#include "log.h"
 
 //~ Global variables definition for FxA
 using namespace FxA;
@@ -27,25 +28,30 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc) {
 
 void SleepLight::setup() {
     LedEffect::setup();
-    color = colorIndex;
+    clrX = random8();
     lightIntensity = brightness;
+    lightVar = 0;
+    colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity, LINEARBLEND);
 }
 
 void SleepLight::run() {
-    EVERY_N_SECONDS(1) {
-        CRGBSet strip(leds, NUM_PIXELS);
-        strip = ColorFromPalette(paletteFactory.sleepPalette(), color, brightness, LINEARBLEND);
-    }
     EVERY_N_MINUTES(2) {
         lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 3;
+        lightVar = 3 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
+        colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), ++clrX, brightness, LINEARBLEND);
+        leds[0] = colorBuf;
+        Log.infoln("SleepLight parameters: lightIntensity=%d, lightVariance=%d, colorIndex=%d, color=%r", lightIntensity, lightVar, clrX, colorBuf);
     }
-    EVERY_N_SECONDS(5) {
-        color++;
-    }
-    EVERY_N_MILLIS(100) {
-        //linear interpolation of beat amplitude - our raw light intensities are between 128 and 32
-        uint8_t variation = (brighten8_raw(lightIntensity) - 31)*(25-5)/(128-32);
-        FastLED.show(lightIntensity + beatsin8(7, 0, variation));
+    EVERY_N_MILLIS(60) {
+        //linear interpolation of beat amplitude
+        CRGBSet strip(leds, NUM_PIXELS);
+        uint8_t lightDelta = beatsin8(4, 0, lightVar);
+        colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity+lightDelta, LINEARBLEND);
+
+        CRGB &curClr = strip[0];
+        nblend(curClr, colorBuf, 64);
+        strip = curClr;
+        FastLED.show();
     }
 }
 
