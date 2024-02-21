@@ -31,6 +31,7 @@ void SleepLight::setup() {
     clrX = random8();
     lightIntensity = brightness-16;
     lightVar = 0;
+    overlay = 48;
     colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity, LINEARBLEND);
 }
 
@@ -46,10 +47,13 @@ void SleepLight::run() {
         //linear interpolation of beat amplitude
         CRGBSet strip(leds, NUM_PIXELS);
         uint8_t lightDelta = beatsin8(5, 0, lightVar);
+        CRGB curClrBuf = colorBuf;
         colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity+lightDelta, LINEARBLEND);
+        overlay = colorBuf == curClrBuf ? overlay : 48;
 
         CRGB &curClr = strip[0];
-        nblend(curClr, colorBuf, 48);
+        nblend(curClr, colorBuf, overlay);
+        overlay = qadd8(overlay, 16);
         strip = curClr;
         FastLED.show();
     }

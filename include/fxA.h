@@ -26,6 +26,7 @@ namespace FxA {
         uint8_t lightIntensity{};
         uint8_t clrX{};
         uint8_t lightVar{};
+        uint8_t overlay{};
         CRGB colorBuf{};
     };
 
