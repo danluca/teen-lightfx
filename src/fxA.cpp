@@ -29,7 +29,7 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc) {
 void SleepLight::setup() {
     LedEffect::setup();
     clrX = random8();
-    lightIntensity = brightness;
+    lightIntensity = brightness-16;
     lightVar = 0;
     colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity, LINEARBLEND);
 }
@@ -40,16 +40,16 @@ void SleepLight::run() {
         lightVar = 3 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
         colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), ++clrX, brightness, LINEARBLEND);
         leds[0] = colorBuf;
-        Log.infoln("SleepLight parameters: lightIntensity=%d, lightVariance=%d, colorIndex=%d, color=%r", lightIntensity, lightVar, clrX, colorBuf);
+        Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, colorIndex=%d, color=%r"), lightIntensity, lightVar, clrX, colorBuf);
     }
     EVERY_N_MILLIS(60) {
         //linear interpolation of beat amplitude
         CRGBSet strip(leds, NUM_PIXELS);
-        uint8_t lightDelta = beatsin8(4, 0, lightVar);
+        uint8_t lightDelta = beatsin8(5, 0, lightVar);
         colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity+lightDelta, LINEARBLEND);
 
         CRGB &curClr = strip[0];
-        nblend(curClr, colorBuf, 64);
+        nblend(curClr, colorBuf, 48);
         strip = curClr;
         FastLED.show();
     }

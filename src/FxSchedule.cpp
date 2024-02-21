@@ -56,7 +56,7 @@ void scheduleSchoolDay(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
-    Log.infoln("Scheduled %d alarms for SchoolDay %y", scheduledAlarms.size() - curAlarmCount, time);
+    Log.infoln(F("Scheduled %d alarms for SchoolDay %y"), scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleDayOff(time_t time) {
@@ -73,7 +73,7 @@ void scheduleDayOff(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
-    Log.infoln("Scheduled %d alarms for Day Off %y", scheduledAlarms.size() - curAlarmCount, time);
+    Log.infoln(F("Scheduled %d alarms for Day Off %y"), scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleVacation(time_t time) {
@@ -90,7 +90,7 @@ void scheduleVacation(time_t time) {
     //sleep
     time_t bedTime = getBedTime(startDay);
     scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
-    Log.infoln("Scheduled %d alarms for Vacation Day %y", scheduledAlarms.size() - curAlarmCount, time);
+    Log.infoln(F("Scheduled %d alarms for Vacation Day %y"), scheduledAlarms.size() - curAlarmCount, time);
 }
 
 void scheduleNotHome(time_t time) {
@@ -100,12 +100,12 @@ void scheduleNotHome(time_t time) {
     time_t startDay = previousMidnight(time);
     time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
     scheduledAlarms.push_back(new AlarmData {.value=upOff, .type=ALARM_OFF, .onEventHandler=sleepOff});
-    Log.infoln("Scheduled 1 alarms for Not Home Day %y", time);
+    Log.infoln(F("Scheduled 1 alarms for Not Home Day %y"), time);
 }
 
 void logAlarms() {
     for (const auto &al : scheduledAlarms)
-        Log.infoln("Alarm %X type %d scheduled for %y; handler %X", (long)al, al->type, al->value, (long)al->onEventHandler);
+        Log.infoln(F("Alarm %X type %d scheduled for %y; handler %X"), (long)al, al->type, al->value, (long)al->onEventHandler);
 }
 
 /**
@@ -155,13 +155,15 @@ void alarm_loop() {
         for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
             auto al = *it;
             if (al->value <= time) {
-                Log.infoln("Alarm %X type %d triggered at %y for scheduled time %y; handler %X", (long)al, al->type, time, al->value, (long)al->onEventHandler);
+                Log.infoln(F("Alarm %X type %d triggered at %y for scheduled time %y; handler %X"), (long)al, al->type, time, al->value, (long)al->onEventHandler);
                 al->onEventHandler();
                 it = scheduledAlarms.erase(it);
                 delete al;
             } else
                 ++it;
         }
+        Log.infoln(F("Alarms remaining:"));
+        logAlarms();
 
 //        for (size_t x = 0; x < scheduledAlarms.size(); x++) {
 //            AlarmData *al = scheduledAlarms.front();
