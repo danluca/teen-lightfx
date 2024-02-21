@@ -150,6 +150,17 @@ void adjustCurrentEffect(time_t time) {
     }
 }
 
+/**
+ * Whether the time provided is during night time, or otherwise darkness.
+ * Night time is defined from 22:00 throughout 6:59am in the morning, every day.
+ * @param time time to check (optional) - current time if not provided
+ * @return true if in the time window of sleep/darkness; false otherwise
+ */
+bool isSleepTime(const time_t time = 0) {
+    int tmHour = time == 0 ? hour() : hour(time);
+    return tmHour > 21 || tmHour < 7;
+}
+
 //~ General Utilities ---------------------------------------------------------
 /**
  * Resets the state of all global variables, including the state of the LED strip. Suitable for a clean slate
@@ -1009,13 +1020,10 @@ void fx_setup() {
 //Run currently selected effect -------
 void fx_run() {
     EVERY_N_SECONDS(5) {
-        int hr = hour();
-        if (!partyMode && (hr > 22 || hr < 7)) {
-            if (fxBump) {
-                fxBump = false;
-                totalAudioBumps++;
-                fxRegistry.getCurrentEffect()->setup();
-            }
+        if (!partyMode && isSleepTime() && fxBump) {
+            fxBump = false;
+            totalAudioBumps++;
+            fxRegistry.getCurrentEffect()->setup();
         }
     }
     EVERY_N_SECONDS(30) {
@@ -1042,10 +1050,10 @@ void fx_run() {
     EVERY_N_MINUTES(7) {
         if (partyMode) {
             fxRegistry.nextRandomEffectPos();
-            random16_add_entropy(secRandom16());        //this may or may not help
             shuffleIndexes(stripShuffleIndex, NUM_PIXELS);
             stripBrightness = adjustStripBrightness();
         }
+        random16_add_entropy(secRandom16());        //this may or may not help
         saveState();
     }
 
