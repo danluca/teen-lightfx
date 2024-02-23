@@ -91,6 +91,13 @@ CRGBPalette16 PaletteFactory::sleepPalette() {
     return SleepyColors_p;
 }
 
+void PaletteFactory::toHSVPalette(CHSVPalette16 &hsvPalette, const CRGBPalette16 &rgbPalette) {
+    for (int i = 0; i < 16; i++) {
+        hsvPalette[i] = rgb2hsv_approximate(rgbPalette[i]);
+    }
+}
+
+
 bool PaletteFactory::isAuto() const {
     return autoChangeHoliday;
 }

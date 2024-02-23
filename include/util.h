@@ -38,6 +38,7 @@ void updateStateLED(uint8_t red, uint8_t green, uint8_t blue);
 uint8_t bmul8(uint8_t a, uint8_t b);
 uint8_t bscr8(uint8_t a, uint8_t b);
 uint8_t bovl8(uint8_t a, uint8_t b);
+bool rblend8(uint8_t &a, uint8_t b, uint8_t amt=22) ;
 
 void fsInit();
 

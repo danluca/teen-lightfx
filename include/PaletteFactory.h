@@ -16,7 +16,9 @@ namespace colTheme {
 
         CRGBPalette16 secondaryPalette(time_t time = 0);
 
-        CRGBPalette16 sleepPalette();
+        static CRGBPalette16 sleepPalette();
+
+        static void toHSVPalette(CHSVPalette16 &hsvPalette, const CRGBPalette16 &rgbPalette);
 
         void setHoliday(Holiday hday);
 

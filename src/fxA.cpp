@@ -28,33 +28,27 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc) {
 
 void SleepLight::setup() {
     LedEffect::setup();
-    clrX = random8();
-    lightIntensity = brightness-16;
+    colTheme::PaletteFactory::toHSVPalette(palette, colTheme::PaletteFactory::sleepPalette());
+    clrX = secRandom8();
+    lightIntensity = brightness;
     lightVar = 0;
-    overlay = 48;
-    colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity, LINEARBLEND);
+    colorBuf = ColorFromPalette(palette, clrX, lightIntensity, LINEARBLEND);
 }
 
 void SleepLight::run() {
-    EVERY_N_MINUTES(2) {
-        lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 3;
-        lightVar = 3 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
-        colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), ++clrX, brightness, LINEARBLEND);
-        leds[0] = colorBuf;
+    EVERY_N_SECONDS(30) {
+        lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 1;
+        lightVar = 2 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
+        colorBuf = ColorFromPalette(palette, clrX++, brightness, LINEARBLEND);
         Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, colorIndex=%d, color=%r"), lightIntensity, lightVar, clrX, colorBuf);
     }
-    EVERY_N_MILLIS(60) {
+    EVERY_N_MILLIS(75) {
         //linear interpolation of beat amplitude
         CRGBSet strip(leds, NUM_PIXELS);
-        uint8_t lightDelta = beatsin8(5, 0, lightVar);
-        CRGB curClrBuf = colorBuf;
-        colorBuf = ColorFromPalette(paletteFactory.sleepPalette(), clrX, lightIntensity+lightDelta, LINEARBLEND);
-        overlay = colorBuf == curClrBuf ? overlay : 48;
-
-        CRGB &curClr = strip[0];
-        nblend(curClr, colorBuf, overlay);
-        overlay = qadd8(overlay, 16);
-        strip = curClr;
+        uint8_t lightDelta = beatsin8(11, 0, lightVar);
+        CHSV hsv = colorBuf;
+        rblend8(hsv.val, lightIntensity+lightDelta);
+        strip = hsv;
         FastLED.show();
     }
 }

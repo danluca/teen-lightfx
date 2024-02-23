@@ -38,7 +38,7 @@ CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = dim8_raw(128);     //start with 50%
+uint8_t brightness = dim8_raw(80);     //start with 30%
 uint8_t stripBrightness = brightness;
 bool partyMode = false;
 uint8_t colorIndex = 10;
@@ -616,6 +616,30 @@ void blendOverlay(CRGBSet &blendLayer, const CRGBSet &topLayer) {
     for (CRGBSet::iterator bt = blendLayer.begin(), tp=topLayer.begin(), btEnd = blendLayer.end(), tpEnd = topLayer.end(); bt != btEnd && tp != tpEnd; ++bt, ++tp)
         blendOverlay(*bt, *tp);
 }
+
+/**
+ * Repeatedly blends b into a with a given amount until a=b
+ * @param a recipient
+ * @param b source
+ * @param amt amount of blending
+ * @return true when the recipient is the same as source; false otherwise
+ */
+bool rblend8(uint8_t &a, const uint8_t b, const uint8_t amt) {
+    if (a == b)
+        return true;
+    if (a < b) {
+        uint8_t d = b - a;
+        d = scale8_video(d, amt);
+        a += d;
+    } else {
+        uint8_t d = a - b;
+        d = scale8_video(d, amt);
+        a -= d;
+    }
+    return a == b;
+}
+
+
 
 /**
  * Adjust strip overall brightness according with the time of day - as follows:
