@@ -26,10 +26,23 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc) {
     fxRegistry.registerEffect(this);
 }
 
+uint8_t excludeActiveColors(uint8_t hue) {
+    uint8_t res = hue;
+    if (res <= HUE_ORANGE)
+        res = HUE_ORANGE*2-res;
+    if (res >= HUE_BLUE && res <= HUE_PURPLE)
+        res = HUE_BLUE*2-res;
+    if (res >= (HUE_PINK + 16))
+        res -= 16;
+    return res;
+}
+
 void SleepLight::setup() {
     LedEffect::setup();
     colTheme::PaletteFactory::toHSVPalette(palette, colTheme::PaletteFactory::sleepPalette());
-    clrX = secRandom8();
+    hue = excludeActiveColors(secRandom8());
+    sat = secRandom8(24, 128);
+    clrX = brightness;
     lightIntensity = brightness;
     lightVar = 0;
     colorBuf = ColorFromPalette(palette, clrX, lightIntensity, LINEARBLEND);
@@ -39,15 +52,20 @@ void SleepLight::run() {
     EVERY_N_SECONDS(30) {
         lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 1;
         lightVar = 2 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
-        colorBuf = ColorFromPalette(palette, clrX++, brightness, LINEARBLEND);
-        Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, colorIndex=%d, color=%r"), lightIntensity, lightVar, clrX, colorBuf);
+        colorBuf.hue = hue;
+        colorBuf.sat = sat;
+        hue = excludeActiveColors(hue++);
+        sat = 24 + (sat+1)%104;
+        Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, hue=%d, sat=%d, color=%r"), lightIntensity, lightVar, hue, sat, colorBuf);
     }
-    EVERY_N_MILLIS(75) {
+    EVERY_N_SECONDS(5) {
+        clrX = clrX > lightIntensity ? lightIntensity : lightIntensity+lightVar;
+    }
+    EVERY_N_MILLIS(125) {
         //linear interpolation of beat amplitude
         CRGBSet strip(leds, NUM_PIXELS);
-        uint8_t lightDelta = beatsin8(11, 0, lightVar);
         CHSV hsv = colorBuf;
-        rblend8(hsv.val, lightIntensity+lightDelta);
+        rblend8(hsv.val, clrX);
         strip = hsv;
         FastLED.show();
     }

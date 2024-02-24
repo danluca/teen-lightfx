@@ -24,6 +24,8 @@ namespace FxA {
 
     protected:
         uint8_t lightIntensity{};
+        uint8_t hue{};
+        uint8_t sat{};
         uint8_t clrX{};
         uint8_t lightVar{};
         CHSV colorBuf{};
