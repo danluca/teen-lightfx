@@ -40,35 +40,54 @@ uint8_t excludeActiveColors(uint8_t hue) {
 void SleepLight::setup() {
     LedEffect::setup();
     colTheme::PaletteFactory::toHSVPalette(palette, colTheme::PaletteFactory::sleepPalette());
-    hue = excludeActiveColors(secRandom8());
+    clrX = secRandom8();
+    hue = excludeActiveColors(clrX);
     sat = secRandom8(24, 128);
-    clrX = brightness;
     lightIntensity = brightness;
-    lightVar = 0;
-    colorBuf = ColorFromPalette(palette, clrX, lightIntensity, LINEARBLEND);
+    lightVar = 30;
+    colorBuf = ColorFromPalette(palette, secRandom8());
+    FastLED.setTemperature(ColorTemperature::Candle);
 }
 
 void SleepLight::run() {
     EVERY_N_SECONDS(30) {
         lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 1;
-        lightVar = 2 + (lightIntensity - minBrightness)*(32-5)/(brightness-minBrightness);
+        lightVar = 2 + (lightIntensity - minBrightness)*(36-5)/(brightness-minBrightness);
         colorBuf.hue = hue;
         colorBuf.sat = sat;
-        hue = excludeActiveColors(hue++);
-        sat = 24 + (sat+1)%104;
+        //colorBuf.val = lightIntensity;
+        hue = excludeActiveColors(++clrX);
+        sat = map(lightIntensity, minBrightness, brightness, 20, 96);
         Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, hue=%d, sat=%d, color=%r"), lightIntensity, lightVar, hue, sat, colorBuf);
     }
-    EVERY_N_SECONDS(5) {
-        clrX = clrX > lightIntensity ? lightIntensity : lightIntensity+lightVar;
-    }
-    EVERY_N_MILLIS(125) {
+    EVERY_N_MILLIS(60) {
         //linear interpolation of beat amplitude
-        CRGBSet strip(leds, NUM_PIXELS);
-        CHSV hsv = colorBuf;
-        rblend8(hsv.val, clrX);
-        strip = hsv;
+        double dBreath = (exp(sin(millis()/2400.0*PI)) - 0.36787944)*108.0;
+        uint8_t breathLum = map(dBreath, 0, 255, lightIntensity, lightIntensity+lightVar);
+        colorBuf.val = breathLum;
+        CRGB clr = colorBuf;
+        if (lightIntensity < (minBrightness+8)) {
+            segUp.fadeToBlackBy(3);
+            segRight(0, 19).fadeToBlackBy(3);
+            segFront(0, 15).fadeLightBy(3);
+            segLeft(0, 18).fadeToBlackBy(3);
+            segBack(0, 15).fadeToBlackBy(3);
+
+            segRight(20, segRight.size()-1) = clr;
+            segFront(16, segFront.size()-1) = clr;
+            segLeft(19, segLeft.size()-1) = clr;
+            segBack(16, segBack.size()-1) = clr;
+        } else {
+            segUp = clr;
+            segRight = clr;
+            segFront = clr;
+            segLeft = clr;
+            segBack = clr;
+        }
+        //Log.infoln("dBreath=%F, breathLum=%d current lum=%d, colorBuf=%r, rgb=%r", dBreath, breathLum, lightIntensity, colorBuf, clr);
         FastLED.show();
     }
+
 }
 
 uint8_t SleepLight::selectionWeight() const {
