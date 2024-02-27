@@ -154,6 +154,10 @@ void wifi_loop() {
         }
         Log.infoln(F("System status: %X"), getSysStatus());
     }
+    EVERY_N_HOURS(20) {
+        bool result = ntp_sync();
+        Log.infoln(F("Time NTP sync performed; success = %T"), result);
+    }
     webserver();
 }
 

@@ -113,7 +113,12 @@ bool ntp_sync() {
     timeClient.begin();
     timeClient.update();
     timeClient.end();
-    return timeClient.isTimeSet();
+    bool result = timeClient.isTimeSet();
+    if (result) {
+        TimeSync tsync {.localMillis = millis(), .unixMillis=now()};
+        timeSyncs.push(tsync);
+    }
+    return result;
 }
 
 /**
@@ -190,3 +195,26 @@ uint16_t encodeMonthDay(const time_t time) {
     return ((month(theTime) & 0xFF) << 8) + (day(theTime) & 0xFF);
 }
 
+int getAverageTimeDrift() {
+    if (timeSyncs.size() < 2)
+        return 0;
+    int drift = 0;
+    TimeSync *prevSync = nullptr;
+    for (auto &ts : timeSyncs) {
+        if (prevSync == nullptr)
+            prevSync = &ts;
+        else {
+            drift += ts.unixMillis - prevSync->unixMillis - (ts.localMillis - prevSync->localMillis);
+            prevSync = &ts;
+        }
+    }
+    return drift / (timeSyncs.size()-1);
+}
+
+int getLastTimeDrift() {
+    if (timeSyncs.size() < 2)
+        return 0;
+    TimeSync &lastSync = timeSyncs.back();
+    TimeSync &prevSync = timeSyncs.end()[-2];   // end() is past the last element, -1 for last element, -2 for second-last
+    return lastSync.unixMillis - prevSync.unixMillis - (lastSync.localMillis - prevSync.localMillis);
+}

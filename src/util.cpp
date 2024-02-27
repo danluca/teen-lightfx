@@ -13,6 +13,7 @@ const uint maxAdc = 1 << ADC_RESOLUTION;
 const char stateFileName[] = LITTLEFS_FILE_PREFIX "/state.json";
 
 static uint8_t sysStatus = 0x00;    //system status bit array
+FixedQueue<TimeSync, 8> timeSyncs;
 
 LittleFSWrapper *fsPtr;
 

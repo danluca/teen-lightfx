@@ -47,6 +47,17 @@
 #define CHIP_RP2040_TEMP_SENSOR_VOLTAGE_SLOPE   1.807087f       //in mV/degree (value is negative, but that is accounted in the formula)
 #define BOARD_NAME  "Dev"
 
+//light segment sizes in Eric's room
+#define SEG_UP_START    0
+#define SEG_UP_END      23
+#define SEG_RIGHT_START 24
+#define SEG_RIGHT_END   61
+#define SEG_FRONT_START 62
+#define SEG_FRONT_END   93
+#define SEG_LEFT_START  94
+#define SEG_LEFT_END    132
+#define SEG_BACK_START  133
+
 #endif
 
 #if BOARD_ID == 2

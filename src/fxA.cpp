@@ -65,19 +65,22 @@ void SleepLight::run() {
         double dBreath = (exp(sin(millis()/2400.0*PI)) - 0.36787944)*108.0;
         uint8_t breathLum = map(dBreath, 0, 255, lightIntensity, lightIntensity+lightVar);
         colorBuf.val = breathLum;
-        CRGB clr = colorBuf;
         if (lightIntensity < (minBrightness+8)) {
-            segUp.fadeToBlackBy(3);
-            segRight(0, 19).fadeToBlackBy(3);
-            segFront(0, 15).fadeLightBy(3);
-            segLeft(0, 18).fadeToBlackBy(3);
-            segBack(0, 15).fadeToBlackBy(3);
+            segUp.fadeToBlackBy(1);
+            segRight(0, 19).fadeToBlackBy(1);
+            segFront(0, 15).fadeToBlackBy(1);
+            segLeft(0, 18).fadeToBlackBy(1);
+            segBack(0, 15).fadeToBlackBy(1);
 
+            CRGB &clr = segRight[20];
+            CRGB neutral = adjustBrightness(CRGB::Wheat, breathLum);
+            nblend(clr, neutral, 2);
             segRight(20, segRight.size()-1) = clr;
             segFront(16, segFront.size()-1) = clr;
             segLeft(19, segLeft.size()-1) = clr;
             segBack(16, segBack.size()-1) = clr;
         } else {
+            CRGB clr = colorBuf;
             segUp = clr;
             segRight = clr;
             segFront = clr;

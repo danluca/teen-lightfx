@@ -30,5 +30,12 @@ uint16_t encodeMonthDay(time_t time = 0);
 bool time_setup();
 time_t curUnixTime();
 bool ntp_sync();
+int getAverageTimeDrift();
+int getLastTimeDrift();
+
+struct TimeSync {
+    ulong localMillis{};
+    time_t unixMillis{};
+};
 
 #endif //TEEN_LIGHTFX_TIMEUTIL_H

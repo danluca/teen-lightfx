@@ -72,4 +72,5 @@ public:
     const_iterator end() const { return this->c.end(); }
 };
 
+extern FixedQueue<TimeSync, 8> timeSyncs;
 #endif //TEEN_LIGHTFX_UTIL_H
