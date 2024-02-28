@@ -35,7 +35,7 @@ int getLastTimeDrift();
 
 struct TimeSync {
     ulong localMillis{};
-    time_t unixMillis{};
+    time_t unixSeconds{};
 };
 
 #endif //TEEN_LIGHTFX_TIMEUTIL_H

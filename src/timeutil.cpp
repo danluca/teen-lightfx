@@ -115,7 +115,7 @@ bool ntp_sync() {
     timeClient.end();
     bool result = timeClient.isTimeSet();
     if (result) {
-        TimeSync tsync {.localMillis = millis(), .unixMillis=now()};
+        TimeSync tsync {.localMillis = millis(), .unixSeconds=now()};
         timeSyncs.push(tsync);
     }
     return result;
@@ -204,7 +204,7 @@ int getAverageTimeDrift() {
         if (prevSync == nullptr)
             prevSync = &ts;
         else {
-            drift += ts.unixMillis - prevSync->unixMillis - (ts.localMillis - prevSync->localMillis);
+            drift += (ts.unixSeconds - prevSync->unixSeconds)*1000 - (ts.localMillis - prevSync->localMillis);
             prevSync = &ts;
         }
     }
@@ -216,5 +216,5 @@ int getLastTimeDrift() {
         return 0;
     TimeSync &lastSync = timeSyncs.back();
     TimeSync &prevSync = timeSyncs.end()[-2];   // end() is past the last element, -1 for last element, -2 for second-last
-    return lastSync.unixMillis - prevSync.unixMillis - (lastSync.localMillis - prevSync.localMillis);
+    return (lastSync.unixSeconds - prevSync.unixSeconds)*1000 - (lastSync.localMillis - prevSync.localMillis);
 }

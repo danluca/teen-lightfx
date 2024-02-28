@@ -154,9 +154,13 @@ void wifi_loop() {
         }
         Log.infoln(F("System status: %X"), getSysStatus());
     }
-    EVERY_N_HOURS(20) {
+    EVERY_N_HOURS(2) {
         bool result = ntp_sync();
         Log.infoln(F("Time NTP sync performed; success = %T"), result);
+        if (result && timeSyncs.size() > 2) {
+            //log the current drift
+            Log.infoln(F("Current drift detected %d ms at %y since %y"), getLastTimeDrift(), now(), timeSyncs.end()[-2].unixSeconds);
+        }
     }
     webserver();
 }

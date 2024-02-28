@@ -18,7 +18,7 @@ const char csCurFx[] = "curFx";
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
 const CRGB BKG = CRGB::Black;
 const uint8_t maxChanges = 24;
-const uint8_t minBrightness = 24;
+const uint8_t minBrightness = 20;
 volatile bool fxBump = false;
 volatile uint16_t speed = 100;
 volatile uint16_t curPos = 0;
@@ -38,7 +38,7 @@ CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = 128;
+uint8_t brightness = dim8_lin(128);
 uint8_t stripBrightness = brightness;
 bool partyMode = false;
 uint8_t colorIndex = 10;
@@ -176,7 +176,7 @@ void resetGlobals() {
     palette = paletteFactory.mainPalette();
     targetPalette = paletteFactory.secondaryPalette();
     mode = Chase;
-    brightness = dim8_raw(128);
+    brightness = dim8_lin(128);
     colorIndex = lastColorIndex = 0;
     curPos = 0;
     speed = 100;

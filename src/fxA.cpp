@@ -39,13 +39,14 @@ uint8_t excludeActiveColors(uint8_t hue) {
 
 void SleepLight::setup() {
     LedEffect::setup();
+    timer=0;
     clrX = secRandom8();
     hue = excludeActiveColors(clrX);
     sat = secRandom8(24, 128);
     lightIntensity = brightness;
     lightVar = 30;
     colorBuf.hue = hue; colorBuf.sat = sat; colorBuf.val=lightIntensity;
-    FastLED.setTemperature(ColorTemperature::Candle);
+    FastLED.setTemperature(ColorTemperature::Tungsten40W);
 }
 
 void SleepLight::run() {
@@ -60,10 +61,10 @@ void SleepLight::run() {
         sat = map(lightIntensity, minBrightness, brightness, 20, 96);
         Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, hue=%d, sat=%d, color=%r"), lightIntensity, lightVar, hue, sat, colorBuf);
     }
-    EVERY_N_MILLIS(60) {
+    EVERY_N_MILLIS(75) {
         //linear interpolation of beat amplitude
-        double dBreath = (exp(sin(millis()/3600.0*PI)) - 0.36787944)*108.0*lightVar/255.0 + lightIntensity;
-        auto breathLum = (uint8_t)dBreath;
+        //double dBreath = (exp(sin(millis()/3600.0*PI)) - 0.36787944)*108.0*lightVar/255.0 + lightIntensity;
+        auto breathLum = lightIntensity + lightVar/2;
         colorBuf.val = breathLum;
         timer = ++timer%30;
         if (lightIntensity < (minBrightness+8)) {
@@ -75,7 +76,7 @@ void SleepLight::run() {
                 segBack(0, 15).fadeToBlackBy(1);
 
                 CRGB &clr = segRight[20];
-                CRGB neutral = adjustBrightness(CRGB::Gray, breathLum);
+                CRGB neutral = adjustBrightness(CRGB::DarkOrchid, breathLum);
                 nblend(clr, neutral, 2);
                 segRight(20, segRight.size() - 1) = clr;
                 segFront(16, segFront.size() - 1) = clr;
