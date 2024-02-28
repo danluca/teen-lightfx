@@ -39,13 +39,12 @@ uint8_t excludeActiveColors(uint8_t hue) {
 
 void SleepLight::setup() {
     LedEffect::setup();
-    colTheme::PaletteFactory::toHSVPalette(palette, colTheme::PaletteFactory::sleepPalette());
     clrX = secRandom8();
     hue = excludeActiveColors(clrX);
     sat = secRandom8(24, 128);
     lightIntensity = brightness;
     lightVar = 30;
-    colorBuf = ColorFromPalette(palette, secRandom8());
+    colorBuf.hue = hue; colorBuf.sat = sat; colorBuf.val=lightIntensity;
     FastLED.setTemperature(ColorTemperature::Candle);
 }
 
@@ -56,29 +55,33 @@ void SleepLight::run() {
         colorBuf.hue = hue;
         colorBuf.sat = sat;
         //colorBuf.val = lightIntensity;
-        hue = excludeActiveColors(++clrX);
+        clrX += lightVar/2;
+        hue = excludeActiveColors(clrX);
         sat = map(lightIntensity, minBrightness, brightness, 20, 96);
         Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, hue=%d, sat=%d, color=%r"), lightIntensity, lightVar, hue, sat, colorBuf);
     }
     EVERY_N_MILLIS(60) {
         //linear interpolation of beat amplitude
-        double dBreath = (exp(sin(millis()/2400.0*PI)) - 0.36787944)*108.0;
-        uint8_t breathLum = map(dBreath, 0, 255, lightIntensity, lightIntensity+lightVar);
+        double dBreath = (exp(sin(millis()/3600.0*PI)) - 0.36787944)*108.0*lightVar/255.0 + lightIntensity;
+        auto breathLum = (uint8_t)dBreath;
         colorBuf.val = breathLum;
+        timer = ++timer%30;
         if (lightIntensity < (minBrightness+8)) {
-            segUp.fadeToBlackBy(1);
-            segRight(0, 19).fadeToBlackBy(1);
-            segFront(0, 15).fadeToBlackBy(1);
-            segLeft(0, 18).fadeToBlackBy(1);
-            segBack(0, 15).fadeToBlackBy(1);
+            if (timer == 0) {
+                segUp.fadeToBlackBy(1);
+                segRight(0, 19).fadeToBlackBy(1);
+                segFront(0, 15).fadeToBlackBy(1);
+                segLeft(0, 18).fadeToBlackBy(1);
+                segBack(0, 15).fadeToBlackBy(1);
 
-            CRGB &clr = segRight[20];
-            CRGB neutral = adjustBrightness(CRGB::Wheat, breathLum);
-            nblend(clr, neutral, 2);
-            segRight(20, segRight.size()-1) = clr;
-            segFront(16, segFront.size()-1) = clr;
-            segLeft(19, segLeft.size()-1) = clr;
-            segBack(16, segBack.size()-1) = clr;
+                CRGB &clr = segRight[20];
+                CRGB neutral = adjustBrightness(CRGB::Gray, breathLum);
+                nblend(clr, neutral, 2);
+                segRight(20, segRight.size() - 1) = clr;
+                segFront(16, segFront.size() - 1) = clr;
+                segLeft(19, segLeft.size() - 1) = clr;
+                segBack(16, segBack.size() - 1) = clr;
+            }
         } else {
             CRGB clr = colorBuf;
             segUp = clr;

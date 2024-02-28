@@ -29,7 +29,7 @@ namespace FxA {
         uint8_t clrX{};
         uint8_t lightVar{};
         CHSV colorBuf{};
-        CHSVPalette16 palette{};
+        uint8_t timer{};
     };
 
     class Quiet : public LedEffect {

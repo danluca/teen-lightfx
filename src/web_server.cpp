@@ -398,6 +398,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     time["time"] = timeBuf;
     time["dst"] = isSysStatus(SYS_STATUS_DST);
     time["holiday"] = holidayToString(currentHoliday());      //time derived holiday
+    time["syncSize"] = timeSyncs.size();
     time["averageDrift"] = getAverageTimeDrift();
     time["lastDrift"] = getLastTimeDrift();
     JsonArray alarms = time.createNestedArray("alarms");
