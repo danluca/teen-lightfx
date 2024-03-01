@@ -12,8 +12,8 @@ NTPClient timeClient(Udp, CST_OFFSET_SECONDS);  //time client, retrieves time fr
 
 bool time_setup() {
     //read the time
-    bool ntpTimeAvailable = ntp_sync();
     setSyncProvider(curUnixTime);
+    bool ntpTimeAvailable = ntp_sync();
 #ifndef DISABLE_LOGGING
     Log.warningln(F("Acquiring NTP time, attempt %s"), ntpTimeAvailable ? "was successful" : "has FAILED, retrying later...");
 #endif
@@ -195,26 +195,56 @@ uint16_t encodeMonthDay(const time_t time) {
     return ((month(theTime) & 0xFF) << 8) + (day(theTime) & 0xFF);
 }
 
-int getAverageTimeDrift() {
+/**
+ * Computes drift of local time from official time between two time sync points
+ * @param from time sync point
+ * @param to later time sync point
+ * @return time drift in ms - positive means local time is faster, negative means local time is slower than the official time
+ */
+int getDrift(const TimeSync &from, const TimeSync &to) {
+    time_t localDelta = (time_t)to.localMillis - (time_t)from.localMillis;
+    time_t unixDelta = (to.unixSeconds - from.unixSeconds)*1000l;
+    return (int)(localDelta-unixDelta);
+}
+
+/**
+ * Total amount of drift accumulated in the time sync points
+ * @return total time drift in ms
+ */
+int getTotalDrift() {
     if (timeSyncs.size() < 2)
         return 0;
     int drift = 0;
     TimeSync *prevSync = nullptr;
-    for (auto &ts : timeSyncs) {
+    for (auto &ts: timeSyncs) {
         if (prevSync == nullptr)
             prevSync = &ts;
-        else {
-            drift += (ts.unixSeconds - prevSync->unixSeconds)*1000 - (ts.localMillis - prevSync->localMillis);
-            prevSync = &ts;
-        }
+        else
+            drift += getDrift(*prevSync, ts);
     }
-    return drift / (timeSyncs.size()-1);
+    return drift;
 }
 
+/**
+ * Total time drift averaged over the time period accumulated in the time sync points
+ * @return average time drift in ms/hour
+ */
+int getAverageTimeDrift() {
+    if (timeSyncs.size() < 2)
+        return 0;
+    time_t start = timeSyncs.begin()->unixSeconds;
+    time_t end = timeSyncs.end()[-1].unixSeconds;       // end() is past the last element, -1 for last element
+    return getTotalDrift() * 3600 / (int)(end-start);
+}
+
+/**
+ * Most recently measured time drift (between last two time sync points)
+ * @return most recent measured time drift in ms
+ */
 int getLastTimeDrift() {
     if (timeSyncs.size() < 2)
         return 0;
     TimeSync &lastSync = timeSyncs.back();
     TimeSync &prevSync = timeSyncs.end()[-2];   // end() is past the last element, -1 for last element, -2 for second-last
-    return (lastSync.unixSeconds - prevSync.unixSeconds)*1000 - (lastSync.localMillis - prevSync.localMillis);
+    return getDrift(prevSync, lastSync);
 }

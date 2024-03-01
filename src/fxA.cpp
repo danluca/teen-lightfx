@@ -50,7 +50,7 @@ void SleepLight::setup() {
 }
 
 void SleepLight::run() {
-    EVERY_N_SECONDS(30) {
+    EVERY_N_SECONDS(20) {
         lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 1;
         lightVar = 2 + (lightIntensity - minBrightness)*(36-5)/(brightness-minBrightness);
         colorBuf.hue = hue;

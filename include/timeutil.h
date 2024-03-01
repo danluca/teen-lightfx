@@ -27,15 +27,17 @@ uint8_t formatDateTime(char *buf, time_t time = 0);
 bool isDST(time_t time);
 uint16_t encodeMonthDay(time_t time = 0);
 
+struct TimeSync {
+    ulong localMillis{};
+    time_t unixSeconds{};
+};
+
 bool time_setup();
 time_t curUnixTime();
 bool ntp_sync();
 int getAverageTimeDrift();
 int getLastTimeDrift();
-
-struct TimeSync {
-    ulong localMillis{};
-    time_t unixSeconds{};
-};
+int getTotalDrift();
+int getDrift(const TimeSync &from, const TimeSync &to);
 
 #endif //TEEN_LIGHTFX_TIMEUTIL_H

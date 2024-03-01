@@ -401,6 +401,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     time["syncSize"] = timeSyncs.size();
     time["averageDrift"] = getAverageTimeDrift();
     time["lastDrift"] = getLastTimeDrift();
+    time["totalDrift"] = getTotalDrift();
     JsonArray alarms = time.createNestedArray("alarms");
     for (const auto &al : scheduledAlarms) {
         JsonObject jal = alarms.createNestedObject();
