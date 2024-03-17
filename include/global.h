@@ -43,6 +43,7 @@ enum OpMode { TurnOff, Chase };
 enum EffectState {Setup, Running, WindDownPrep, WindDown, TransitionBreakPrep, TransitionBreak, Idle};
 extern CRGB leds[NUM_PIXELS];
 extern CRGBArray<NUM_PIXELS> frame;
+extern CRGBSet ledSet;
 extern CRGBSet segUp;
 extern CRGBSet segRight;
 extern CRGBSet segFront;

@@ -18,7 +18,7 @@ const char csCurFx[] = "curFx";
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
 const CRGB BKG = CRGB::Black;
 const uint8_t maxChanges = 24;
-const uint8_t minBrightness = 20;
+const uint8_t minBrightness = 10;
 volatile bool fxBump = false;
 volatile uint16_t speed = 100;
 volatile uint16_t curPos = 0;
@@ -26,6 +26,7 @@ volatile uint16_t curPos = 0;
 EffectRegistry fxRegistry;
 CRGB leds[NUM_PIXELS];
 CRGBArray<NUM_PIXELS> frame;
+CRGBSet ledSet(leds, NUM_PIXELS);
 CRGBSet tpl(leds, FRAME_SIZE);                        //array length, indexes go from 0 to length-1
 CRGBSet others(leds, tpl.size(), NUM_PIXELS-1); //start and end indexes are inclusive
 //Room segments
@@ -342,9 +343,9 @@ bool spreadColor(CRGBSet &set, CRGB color, uint8_t gradient) {
  * Moves the segment from old position to new position by leveraging blend, for a smooth transition
  * @param target pixel set that receives the move - this is (much) larger in size than the segment
  * @param segment the segment to move, will not be changed - this is (much) smaller in size than the target
- * @param fromPos old position - the index where the segment is currently at in the target pixel set. The index is the next position from the END of the segment.
+ * @param fromPos old position - the index where the segment is currently at in the target pixel set. The index is the step position from the END of the segment.
  *  Ranges from 0 to target.size()+segment.size()
- * @param toPos new position - the index where the segment needs to be moved at in the target pixel set. The index is the next position from the END of the segment.
+ * @param toPos new position - the index where the segment needs to be moved at in the target pixel set. The index is the step position from the END of the segment.
  *  Ranges from 0 to target.size()+segment.size()
  * @return true when the move is complete, that is when the segment at new position in the target set matches the original segment completely (has blended)
  */
@@ -625,20 +626,42 @@ void blendOverlay(CRGBSet &blendLayer, const CRGBSet &topLayer) {
  * @return true when the recipient is the same as source; false otherwise
  */
 bool rblend8(uint8_t &a, const uint8_t b, const uint8_t amt) {
-    if (a == b)
+    if (a == b || amt == 0)
         return true;
-    if (a < b) {
-        uint8_t d = b - a;
-        d = scale8_video(d, amt);
-        a += d;
-    } else {
-        uint8_t d = a - b;
-        d = scale8_video(d, amt);
-        a -= d;
+    if (amt == 255) {
+        a = b;
+        return true;
     }
+    if (a < b)
+        a += scale8_video(b - a, amt);
+    else
+        a -= scale8_video(a - b, amt);
     return a == b;
 }
 
+/**
+ * Blends the target color into an existing (in-place) such that after a number of iterations
+ * the existing becomes equal with the target
+ * <p>For repeated blending calls, this works better than <code>nblend(CRGB &existing, CRGB &target, uint8 overlay)</code> as it
+ * will actually make existing reach the target value</p>
+ * @param existing color to modify
+ * @param target target color
+ * @param frOverlay fraction (number of 256-ths) of the target color to blend into existing. Special meaning to extreme values:
+ * 0 is a no-op, existing is not changed; 255 forces the existing to equal to target
+ * @return true if the existing color has become equal with target or overlay fraction is 0 (no blending); false otherwise
+ */
+bool lblend(CRGB &existing, const CRGB &target, const fract8 frOverlay) {
+    if (existing == target || frOverlay == 0)
+        return true;
+    if (frOverlay == 255) {
+        existing = target;
+        return true;
+    }
+    bool bRed = rblend8(existing.red, target.red, frOverlay);
+    bool bGreen = rblend8(existing.green, target.green, frOverlay);
+    bool bBlue = rblend8(existing.blue, target.blue, frOverlay);
+    return bRed && bGreen && bBlue;
+}
 
 
 /**
@@ -919,9 +942,9 @@ void LedEffect::loop() {
 }
 
 /**
- * Implementation of desired state - informs the state machine of the intended next state and causes it to react.
+ * Implementation of desired state - informs the state machine of the intended step state and causes it to react.
  * This means either transitioning to an interim state that precedes the desired state, or directly switch to desired state
- * @param dst intended next state
+ * @param dst intended step state
  */
 void LedEffect::desiredState(EffectState dst) {
     if (state == dst)

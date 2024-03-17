@@ -79,6 +79,7 @@ uint8_t getBrightness(const CRGB& rgb);
 inline CHSV toHSV(const CRGB &rgb) { return rgb2hsv_approximate(rgb); }
 inline CRGB toRGB(const CHSV &hsv) { CRGB rgb{}; hsv2rgb_rainbow(hsv, rgb); return rgb; }
 
+bool lblend(CRGB &existing, const CRGB &target, fract8 frOverlay);
 void blendMultiply(CRGBSet &blendLayer, const CRGBSet &topLayer);
 void blendMultiply(CRGB &blendRGB, const CRGB &topRGB);
 void blendScreen(CRGBSet &blendLayer, const CRGBSet &topLayer);

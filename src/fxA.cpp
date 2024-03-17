@@ -22,7 +22,10 @@ void FxA::fxRegister() {
 }
 
 // SleepLight
-SleepLight::SleepLight() : LedEffect(fxa1Desc) {
+SleepLight::SleepLight() : LedEffect(fxa1Desc), state(Fade), refPixel(&segRight[segRight.size()-1]),
+        slOffRight(leds, SEG_RIGHT_START, SEG_RIGHT_START + (SEG_RIGHT_END-SEG_RIGHT_START)/2 + 1),
+        slOffFront(leds, SEG_FRONT_START, SEG_FRONT_START + (SEG_FRONT_END-SEG_FRONT_START)/2 + 1),
+        slOffLeft(leds, SEG_LEFT_START + (SEG_LEFT_END-SEG_LEFT_START)/2 + 1), slOffBack(leds, SEG_BACK_START, SEG_BACK_START+16) {
     fxRegistry.registerEffect(this);
 }
 
@@ -40,61 +43,68 @@ uint8_t excludeActiveColors(uint8_t hue) {
 void SleepLight::setup() {
     LedEffect::setup();
     timer=0;
-    clrX = secRandom8();
-    hue = excludeActiveColors(clrX);
-    sat = secRandom8(24, 128);
-    lightIntensity = brightness;
-    lightVar = 30;
-    colorBuf.hue = hue; colorBuf.sat = sat; colorBuf.val=lightIntensity;
+    state = Fade;
+    colorBuf.hue = excludeActiveColors(secRandom8());
+    colorBuf.sat = secRandom8(24, 128);
+    colorBuf.val = brightness;
     FastLED.setTemperature(ColorTemperature::Tungsten40W);
+    fill_solid(leds, NUM_PIXELS, colorBuf);
+}
+
+uint8_t flrSub(uint8_t val, uint8_t sub, uint8_t floor) {
+    uint8_t res = qsub8(val, sub);
+    return res < floor ? floor : res;
 }
 
 void SleepLight::run() {
     EVERY_N_SECONDS(20) {
-        lightIntensity = lightIntensity <= minBrightness ? minBrightness : lightIntensity - 1;
-        lightVar = 2 + (lightIntensity - minBrightness)*(36-5)/(brightness-minBrightness);
-        colorBuf.hue = hue;
-        colorBuf.sat = sat;
-        //colorBuf.val = lightIntensity;
-        clrX += lightVar/2;
-        hue = excludeActiveColors(clrX);
-        sat = map(lightIntensity, minBrightness, brightness, 20, 96);
-        Log.infoln(F("SleepLight parameters: lightIntensity=%d, lightVariance=%d, hue=%d, sat=%d, color=%r"), lightIntensity, lightVar, hue, sat, colorBuf);
-    }
-    EVERY_N_MILLIS(75) {
-        //linear interpolation of beat amplitude
-        //double dBreath = (exp(sin(millis()/3600.0*PI)) - 0.36787944)*108.0*lightVar/255.0 + lightIntensity;
-        auto breathLum = lightIntensity + lightVar/2;
-        colorBuf.val = breathLum;
-        timer = ++timer%30;
-        if (lightIntensity < (minBrightness+8)) {
-            if (timer == 0) {
-                segUp.fadeToBlackBy(1);
-                segRight(0, 19).fadeToBlackBy(1);
-                segFront(0, 15).fadeToBlackBy(1);
-                segLeft(0, 18).fadeToBlackBy(1);
-                segBack(0, 15).fadeToBlackBy(1);
-
-                CRGB &clr = segRight[20];
-                CRGB neutral = adjustBrightness(CRGB::DarkOrchid, breathLum);
-                nblend(clr, neutral, 2);
-                segRight(20, segRight.size() - 1) = clr;
-                segFront(16, segFront.size() - 1) = clr;
-                segLeft(19, segLeft.size() - 1) = clr;
-                segBack(16, segBack.size() - 1) = clr;
+        if (state != Sleep && state != SleepTransition) {
+            if (refPixel->getLuma() <= minBrightness)
+                state = SleepTransition;
+            else {
+                colorBuf.hue = excludeActiveColors(colorBuf.hue + random8(2, 19));;
+                colorBuf.val = flrSub(toHSV(*refPixel).val, 2, minBrightness);
+                colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 20, 96);;
+                Log.infoln(F("SleepLight parameters: hue=%X, sat=%X, val=%X, color=%r"), colorBuf.hue, colorBuf.sat, colorBuf.val, colorBuf);
             }
-        } else {
-            CRGB clr = colorBuf;
-            segUp = clr;
-            segRight = clr;
-            segFront = clr;
-            segLeft = clr;
-            segBack = clr;
         }
-        //Log.infoln("dBreath=%F, breathLum=%d current lum=%d, colorBuf=%r, rgb=%r", dBreath, breathLum, lightIntensity, colorBuf, clr);
+    }
+    EVERY_N_MILLIS(125) {
+        step();
         FastLED.show();
     }
 
+}
+
+SleepLight::SleepLightState SleepLight::step() {
+    switch (state) {
+        case Fade:
+            if (refPixel->getLuma() > minBrightness)
+                ledSet.fadeToBlackBy(1);
+            else
+                state = SleepTransition;
+            break;
+        case FadeColorTransition:
+            if (lblend(*refPixel, (CRGB)colorBuf, 15))
+                state = Fade;
+            ledSet = *refPixel;
+            break;
+        case SleepTransition:
+            timer = ++timer%12;
+            if (timer == 0) {
+                segUp.fadeToBlackBy(1);
+                slOffRight.fadeToBlackBy(1);
+                slOffFront.fadeToBlackBy(1);
+                slOffLeft.fadeToBlackBy(1);
+                slOffBack.fadeToBlackBy(1);
+                if (segUp[0] == CRGB::Black)
+                    state = Sleep;
+            }
+            break;
+        case Sleep:
+            break;
+    }
+    return state;
 }
 
 uint8_t SleepLight::selectionWeight() const {

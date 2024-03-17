@@ -112,8 +112,8 @@
 #define SEG_FRONT_START 62
 #define SEG_FRONT_END   93
 #define SEG_LEFT_START  94
-#define SEG_LEFT_END    132
-#define SEG_BACK_START  133
+#define SEG_LEFT_END    133
+#define SEG_BACK_START  134
 
 #endif
 

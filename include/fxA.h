@@ -23,13 +23,14 @@ namespace FxA {
         ~SleepLight() override = default;
 
     protected:
-        uint8_t lightIntensity{};
-        uint8_t hue{};
-        uint8_t sat{};
-        uint8_t clrX{};
-        uint8_t lightVar{};
+        enum SleepLightState:uint8_t {Fade, FadeColorTransition, SleepTransition, Sleep} state;
         CHSV colorBuf{};
         uint8_t timer{};
+        CRGB* const refPixel;   //reference pixel - a pixel guaranteed to be lit/on at all times for this effect
+
+        CRGBSet slOffRight, slOffFront, slOffLeft, slOffBack;
+
+        SleepLightState step();
     };
 
     class Quiet : public LedEffect {
