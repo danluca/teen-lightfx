@@ -28,7 +28,7 @@ namespace FxA {
         uint8_t timer{};
         CRGB* const refPixel;   //reference pixel - a pixel guaranteed to be lit/on at all times for this effect
 
-        CRGBSet slOffRight, slOffFront, slOffLeft, slOffBack;
+        CRGBSet slOffUp, slOffRight, slOffFront, slOffLeft, slOffBack;
 
         SleepLightState step();
     };

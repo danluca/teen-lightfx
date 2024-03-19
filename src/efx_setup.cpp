@@ -18,7 +18,7 @@ const char csCurFx[] = "curFx";
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
 const CRGB BKG = CRGB::Black;
 const uint8_t maxChanges = 24;
-const uint8_t minBrightness = 10;
+const uint8_t minBrightness = 24;
 volatile bool fxBump = false;
 volatile uint16_t speed = 100;
 volatile uint16_t curPos = 0;
@@ -39,7 +39,7 @@ CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = dim8_lin(128);
+uint8_t brightness = 128;
 uint8_t stripBrightness = brightness;
 bool partyMode = false;
 uint8_t colorIndex = 10;
@@ -177,7 +177,7 @@ void resetGlobals() {
     palette = paletteFactory.mainPalette();
     targetPalette = paletteFactory.secondaryPalette();
     mode = Chase;
-    brightness = dim8_lin(128);
+    brightness = 128;
     colorIndex = lastColorIndex = 0;
     curPos = 0;
     speed = 100;
@@ -650,7 +650,7 @@ bool rblend8(uint8_t &a, const uint8_t b, const uint8_t amt) {
  * 0 is a no-op, existing is not changed; 255 forces the existing to equal to target
  * @return true if the existing color has become equal with target or overlay fraction is 0 (no blending); false otherwise
  */
-bool lblend(CRGB &existing, const CRGB &target, const fract8 frOverlay) {
+bool rblend(CRGB &existing, const CRGB &target, const fract8 frOverlay) {
     if (existing == target || frOverlay == 0)
         return true;
     if (frOverlay == 255) {
