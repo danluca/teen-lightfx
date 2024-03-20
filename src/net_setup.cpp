@@ -8,6 +8,7 @@
 using namespace colTheme;
 const char ssid[] PROGMEM = WF_SSID;
 const char pass[] PROGMEM = WF_PSW;
+const char hostname[] PROGMEM = "Arduino Board " BOARD_NAME;
 
 const CRGB CLR_ALL_OK = CRGB::Indigo;
 const CRGB CLR_SETUP_IN_PROGRESS = CRGB::Green;
@@ -37,6 +38,7 @@ uint8_t barSignalLevel(int32_t rssi) {
 bool wifi_connect() {
     //static IP address - such that we can have a known location for config page
     WiFi.config({IP_ADDR}, {IP_DNS}, {IP_GW}, {IP_SUBNET});
+    WiFi.setHostname(hostname);
     Log.infoln("Connecting to WiFI '%s'", ssid);  // print the network name (SSID);
     // attempt to connect to WiFi network:
     uint attCount = 0;
