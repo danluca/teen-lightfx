@@ -97,7 +97,7 @@ SleepLight::SleepLightState SleepLight::step() {
         case SleepTransition:
             timer = ++timer%12;
             if (timer == 0) {
-                segUp.fadeToBlackBy(1);
+                slOffUp.fadeToBlackBy(1);
                 slOffRight.fadeToBlackBy(1);
                 slOffFront.fadeToBlackBy(1);
                 slOffLeft.fadeToBlackBy(1);
