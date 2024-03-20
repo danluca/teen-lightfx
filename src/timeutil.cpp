@@ -7,6 +7,17 @@
 
 const char fmtDate[] PROGMEM = "%4d-%02d-%02d";
 const char fmtTime[] PROGMEM = "%02d:%02d:%02d";
+const char strNone[] PROGMEM = "None";
+const char strParty[] PROGMEM = "Party";
+const char strValentine[] PROGMEM = "ValentineDay";
+const char strStPatrick[] PROGMEM = "StPatrick";
+const char strMemorialDay[] PROGMEM = "MemorialDay";
+const char strIndependenceDay[] PROGMEM = "IndependenceDay";
+const char strHalloween[] PROGMEM = "Halloween";
+const char strThanksgiving[] PROGMEM = "Thanksgiving";
+const char strChristmas[] PROGMEM = "Christmas";
+const char strNewYear[] PROGMEM = "NewYear";
+const char strNR[] PROGMEM = "N/R";
 
 NTPClient timeClient(Udp, CST_OFFSET_SECONDS);  //time client, retrieves time from pool.ntp.org for CST
 
@@ -128,6 +139,18 @@ bool ntp_sync() {
  */
 Holiday buildHoliday(time_t time) {
     const uint16_t md = encodeMonthDay(time);
+    //Valentine's Day: Feb 11 through 15
+    if (md > 0x020B && md < 0x0210)
+        return ValentineDay;
+    //StPatrick's Day: March 15 through 18
+    if (md > 0x030E && md < 0x0313)
+        return StPatrick;
+    //Memorial Day: May 25 through May 31
+    if (md > 0x0518 && md < 0x0600)
+        return MemorialDay;
+    //Independence Day: Jul 1 through Jul 5
+    if (md > 0x0700 && md < 0x0706)
+        return IndependenceDay;
     //Halloween: Oct 1 through Nov 3
     if (md > 0xA00 && md < 0xB04)
         return Halloween;
@@ -154,13 +177,21 @@ Holiday currentHoliday() {
  * @return
  */
 Holiday parseHoliday(const String *str) {
-    if (str->equalsIgnoreCase("Halloween"))
+    if (str->equalsIgnoreCase(strValentine))
+        return ValentineDay;
+    if (str->equalsIgnoreCase(strStPatrick))
+        return StPatrick;
+    if (str->equalsIgnoreCase(strMemorialDay))
+        return MemorialDay;
+    if (str->equalsIgnoreCase(strIndependenceDay))
+        return IndependenceDay;
+    if (str->equalsIgnoreCase(strHalloween))
         return Halloween;
-    else if (str->equalsIgnoreCase("Thanksgiving"))
+    else if (str->equalsIgnoreCase(strThanksgiving))
         return Thanksgiving;
-    else if (str->equalsIgnoreCase("Christmas"))
+    else if (str->equalsIgnoreCase(strChristmas))
         return Christmas;
-    else if (str->equalsIgnoreCase("NewYear"))
+    else if (str->equalsIgnoreCase(strNewYear))
         return NewYear;
     return Party;
 }
@@ -168,19 +199,27 @@ Holiday parseHoliday(const String *str) {
 const char *holidayToString(const Holiday hday) {
     switch (hday) {
         case None:
-            return "None";
+            return strNone;
         case Party:
-            return "Party";
+            return strParty ;
+        case ValentineDay:
+            return strValentine;
+        case StPatrick:
+            return strStPatrick;
+        case MemorialDay:
+            return strMemorialDay;
+        case IndependenceDay:
+            return strIndependenceDay;
         case Halloween:
-            return "Halloween";
+            return strHalloween;
         case Thanksgiving:
-            return "Thanksgiving";
+            return strThanksgiving;
         case Christmas:
-            return "Christmas";
+            return strChristmas;
         case NewYear:
-            return "NewYear";
+            return strNewYear;
         default:
-            return "N/R";
+            return strNR;
     }
 }
 
@@ -248,3 +287,4 @@ int getLastTimeDrift() {
     TimeSync &prevSync = timeSyncs.end()[-2];   // end() is past the last element, -1 for last element, -2 for second-last
     return getDrift(prevSync, lastSync);
 }
+

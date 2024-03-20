@@ -27,8 +27,7 @@ namespace FxA {
         CHSV colorBuf{};
         uint8_t timer{};
         CRGB* const refPixel;   //reference pixel - a pixel guaranteed to be lit/on at all times for this effect
-
-        CRGBSet slOffUp, slOffRight, slOffFront, slOffLeft, slOffBack;
+        std::deque<CRGBSet> slOffSegs;
 
         SleepLightState step();
     };

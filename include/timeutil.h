@@ -15,7 +15,7 @@
 extern WiFiUDP Udp;
 extern NTPClient timeClient;
 
-enum Holiday { None, Party, Halloween, Thanksgiving, Christmas, NewYear };
+enum Holiday { None, Party, ValentineDay, StPatrick, MemorialDay, IndependenceDay, Halloween, Thanksgiving, Christmas, NewYear };
 Holiday buildHoliday(time_t time);
 Holiday currentHoliday();
 Holiday parseHoliday(const String *str);

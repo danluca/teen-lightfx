@@ -22,9 +22,16 @@ void FxA::fxRegister() {
 }
 
 // SleepLight
-SleepLight::SleepLight() : LedEffect(fxa1Desc), state(Fade), refPixel(&segRight[segRight.size()-1]),
-        slOffUp(segUp(0, 20)), slOffRight(segRight(5, segRight.size()-5)), slOffFront(segFront(5, segFront.size()-5)),
-        slOffLeft(segLeft(5, segLeft.size()-5)), slOffBack(segBack(5, segBack.size()-5)) {
+SleepLight::SleepLight() : LedEffect(fxa1Desc), state(Fade), refPixel(&segRight[segRight.size()-1]) {
+    slOffSegs.push_front(segUp(0, segUp.size()-4));
+    slOffSegs.push_front(segRight(5, segRight.size()/2-2));
+    slOffSegs.push_front(segRight(segRight.size()/2+2, segRight.size()-6));
+    slOffSegs.push_front(segFront(5, segFront.size()/2-2));
+    slOffSegs.push_front(segFront(segFront.size()/2+2, segFront.size()-6));
+    slOffSegs.push_front(segLeft(5, segLeft.size()/2-2));
+    slOffSegs.push_front(segLeft(segLeft.size()/2+2, segLeft.size()-6));
+    slOffSegs.push_front(segBack(5, segBack.size()/2-2));
+    slOffSegs.push_front(segBack(segBack.size()/2+2, segBack.size()-10));
     fxRegistry.registerEffect(this);
 }
 
@@ -97,11 +104,8 @@ SleepLight::SleepLightState SleepLight::step() {
         case SleepTransition:
             timer = ++timer%12;
             if (timer == 0) {
-                slOffUp.fadeToBlackBy(1);
-                slOffRight.fadeToBlackBy(1);
-                slOffFront.fadeToBlackBy(1);
-                slOffLeft.fadeToBlackBy(1);
-                slOffBack.fadeToBlackBy(1);
+                for (auto &seg : slOffSegs)
+                    seg.fadeToBlackBy(1);
                 if (segUp[0] == CRGB::Black)
                     state = Sleep;
             }
