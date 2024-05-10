@@ -52,8 +52,11 @@ void SleepLight::setup() {
     fill_solid(leds, NUM_PIXELS, colorBuf);
     timer=0;
     state = FadeColorTransition;
-    colorBuf.hue = excludeActiveColors(secRandom8());
-    colorBuf.sat = secRandom8(24, 128);
+//    colorBuf.hue = excludeActiveColors(secRandom8());
+//    colorBuf.sat = secRandom8(24, 128);
+//    colorBuf.val = brightness;
+    colorBuf.hue = HSVHue::HUE_YELLOW-16;
+    colorBuf.sat = secRandom8(96, 160);
     colorBuf.val = brightness;
     Log.infoln(F("SleepLight setup: colorBuf=%r, hue=%d, sat=%d, val=%d"), (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val);
 }
@@ -73,14 +76,14 @@ uint8_t flrSub(uint8_t val, uint8_t sub, uint8_t floor) {
 
 void SleepLight::run() {
     if (state == Fade) {
-        EVERY_N_SECONDS(21) {
+        EVERY_N_SECONDS(17) {
             colorBuf.val = flrSub(colorBuf.val, 3, minBrightness);
             state = colorBuf.val > minBrightness ? FadeColorTransition : SleepTransition;
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
         }
-        EVERY_N_SECONDS(12) {
+        EVERY_N_SECONDS(11) {
             colorBuf.hue = excludeActiveColors(colorBuf.hue + random8(2, 19));
-            colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 20, 96);
+            colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 32, 128);
             state = colorBuf.val > minBrightness ? FadeColorTransition : SleepTransition;
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
         }
