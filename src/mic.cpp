@@ -19,7 +19,7 @@ short sampleBuffer[MIC_SAMPLE_SIZE];
 volatile size_t samplesRead;
 
 volatile uint16_t maxAudio[10] {};
-volatile uint16_t audioBumpThreshold = 2000;
+volatile uint16_t audioBumpThreshold = 3000;
 
 /**
   * Callback function to process the data from the PDM microphone.
