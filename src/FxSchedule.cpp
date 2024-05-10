@@ -9,9 +9,9 @@
 
 #define DEFAULT_WAKEUP_TIME_ON  (7*SECS_PER_HOUR)                           //7:00am wakeup
 #define DEFAULT_WAKEUP_TIME_OFF (DEFAULT_WAKEUP_TIME_ON + 30*SECS_PER_MIN)  //7:30am wakeup effect turn off
-#define DEFAULT_SCHOOLDAY_BEDTIME   (20*SECS_PER_HOUR)                      //8:00pm bedtime school day
-#define DEFAULT_WEEKEND_BEDTIME     (DEFAULT_SCHOOLDAY_BEDTIME + SECS_PER_HOUR) //9:00pm bedtime weekend, day off
-#define DEFAULT_VACATION_BEDTIME    (DEFAULT_WEEKEND_BEDTIME + SECS_PER_HOUR)   //10:00pm bedtime vacation
+#define DEFAULT_SCHOOLDAY_BEDTIME   (20*SECS_PER_HOUR + 30*SECS_PER_MIN)    //8:30pm bedtime school day
+#define DEFAULT_WEEKEND_BEDTIME     (DEFAULT_SCHOOLDAY_BEDTIME + SECS_PER_HOUR) //9:30pm bedtime weekend, day off
+#define DEFAULT_VACATION_BEDTIME    (DEFAULT_WEEKEND_BEDTIME + 45*SECS_PER_MIN)   //10:15pm bedtime vacation
 #define DEFAULT_SLEEP_IN            (2*SECS_PER_HOUR)
 
 const char strWakeup[] PROGMEM = "Wake-Up";
