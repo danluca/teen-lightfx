@@ -101,8 +101,7 @@ function getStatus() {
             let strAlarms = "";
             data.time.alarms.sort((a, b) => a.timeLong - b.timeLong);
             data.time.alarms.forEach(al =>  strAlarms += `<li>${al.timeFmt} (${al.type})</li>`);
-            let strAlarmsEnabled = data.fx.sleepEnabled ? "" : "<i>(alarms disabled)</i>"
-            $('#schAlarms').html(`${strAlarmsEnabled}${strAlarms.length > 0 ? "<br/><ul>"+strAlarms+"</ul>" : ": None"}`);
+            $('#schAlarms').html(`${strAlarms.length > 0 ? "<br/><ul>"+strAlarms+"</ul>" : ": None"}`);
 
             //update the current effect tiles as well
             $('#curEffectId').html(`index: ${data.fx.index}`);
