@@ -50,7 +50,7 @@ void SleepLight::setup() {
 //    colorBuf.hue = excludeActiveColors(secRandom8());
 //    colorBuf.sat = secRandom8(24, 128);
 //    colorBuf.val = brightness;
-    colorBuf.hue = excludeActiveColors(HSVHue::HUE_YELLOW-16);
+    hue = colorBuf.hue = excludeActiveColors(0);
     colorBuf.sat = 160;
     colorBuf.val = brightness;
     Log.infoln(F("SleepLight setup: colorBuf=%r, hue=%d, sat=%d, val=%d"), (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val);
@@ -77,7 +77,8 @@ void SleepLight::run() {
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
         }
         EVERY_N_SECONDS(11) {
-            colorBuf.hue = excludeActiveColors(colorBuf.hue + random8(2, 19));
+            hue += random8(2, 19);
+            colorBuf.hue = excludeActiveColors(hue);
             colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 24, 160);
             state = colorBuf.val > minBrightness ? FadeColorTransition : SleepTransition;
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
