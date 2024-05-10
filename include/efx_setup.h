@@ -186,7 +186,9 @@ private:
     uint16_t currentEffect = 0;
     uint16_t effectsCount = 0;
     uint16_t lastEffectRun = 0;
+    uint16_t sleepEffect = 0;
     bool autoSwitch = true;
+    bool sleepState = false;
 public:
     EffectRegistry() : effects() {};
 
@@ -223,6 +225,10 @@ public:
     void autoRoll(bool switchType = true);
 
     bool isAutoRoll() const;
+
+    bool isAsleep() const;
+
+    void setSleepState(bool sleepFlag);
 };
 
 extern EffectRegistry fxRegistry;

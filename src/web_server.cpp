@@ -279,8 +279,8 @@ size_t web::handleGetJs(WiFiClient *client, String *uri, String *hd, String *bdy
 
     // figure out which JS source we need
     const char* src = pixel_js;
-    if (uri->endsWith("jquery.min.js"))
-        src = jquery_min_js;
+//    if (uri->endsWith("jquery.min.js"))
+//        src = jquery_min_js;
     // determine size
     size_t jsLen = strlen(src);
     sz += writeContentLengthHeader(client, jsLen);
@@ -360,7 +360,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     sz += client->println();    //done with headers
 
     // response body
-    StaticJsonDocument<1152> doc;
+    StaticJsonDocument<1408> doc;
     // WiFi
     JsonObject wifi = doc.createNestedObject("wifi");
     wifi["IP"] = WiFi.localIP();         //IP Address
@@ -372,15 +372,16 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     // Fx
     JsonObject fx = doc.createNestedObject("fx");
     fx["count"] = fxRegistry.size();
-    fx["auto"] = fxRegistry.isAutoRoll();
-    fx["holiday"] = holidayToString(paletteFactory.getHoliday());   //could be forced to a fixed value
+    fx[csAuto] = fxRegistry.isAutoRoll();
+    fx["asleep"] = fxRegistry.isAsleep();
+    fx[csHoliday] = holidayToString(paletteFactory.getHoliday());   //could be forced to a fixed value
     const LedEffect *curFx = fxRegistry.getCurrentEffect();
     fx["index"] = curFx->getRegistryIndex();
     fx["name"] = curFx->name();
     JsonArray lastFx = fx.createNestedArray("pastEffects");
     fxRegistry.pastEffectsRun(lastFx);                   //ordered earliest to latest (current effect is the last element)
-    fx["brightness"] = stripBrightness;
-    fx["brightnessLocked"] = stripBrightnessLocked;
+    fx[csBrightness] = stripBrightness;
+    fx[csBrightnessLocked] = stripBrightnessLocked;
     fx[csAudioThreshold] = audioBumpThreshold;              //current audio level threshold
     fx["totalAudioBumps"] = totalAudioBumps;                //how many times (in total) have we bumped the effect due to audio level
     JsonArray audioHist = fx.createNestedArray("audioHist");
@@ -405,9 +406,11 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     JsonArray alarms = time.createNestedArray("alarms");
     for (const auto &al : scheduledAlarms) {
         JsonObject jal = alarms.createNestedObject();
+        jal["timeLong"] = al->value;
         formatDateTime(timeBuf, al->value);
-        jal["alarmTime"] = timeBuf;
-        jal["taskPtr"] = (long)al->onEventHandler;
+        jal["timeFmt"] = timeBuf;
+        jal["type"] = alarmTypeToString(al->type);
+//        jal["taskPtr"] = (long)al->onEventHandler;
     }
 
     snprintf(timeBuf, 9, "%2d.%02d.%02d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
@@ -453,33 +456,29 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
         return handleInternalError(client, uri, error.c_str());
 
     StaticJsonDocument<128> resp;
-    const char strAuto[] = "auto";
     const char strEffect[] = "effect";
-    const char strHoliday[] = "holiday";
-    const char strBrightness[] = "brightness";
-    const char strBrightnessLocked[] = "brightnessLocked";
     JsonObject upd = resp.createNestedObject("updates");
-    if (doc.containsKey(strAuto)) {
-        bool autoAdvance = doc[strAuto].as<bool>();
+    if (doc.containsKey(csAuto)) {
+        bool autoAdvance = doc[csAuto].as<bool>();
         fxRegistry.autoRoll(autoAdvance);
-        upd[strAuto] = autoAdvance;
+        upd[csAuto] = autoAdvance;
     }
     if (doc.containsKey(strEffect)) {
         uint16_t nextFx = doc[strEffect].as<uint16_t >();
         fxRegistry.nextEffectPos(nextFx);
         upd[strEffect] = nextFx;
     }
-    if (doc.containsKey(strHoliday)) {
-        String userHoliday = doc[strHoliday].as<String>();
+    if (doc.containsKey(csHoliday)) {
+        String userHoliday = doc[csHoliday].as<String>();
         paletteFactory.setHoliday(parseHoliday(&userHoliday));
-        upd[strHoliday] = paletteFactory.adjustHoliday();
+        upd[csHoliday] = paletteFactory.adjustHoliday();
     }
-    if (doc.containsKey(strBrightness)) {
-        uint8_t br = doc[strBrightness].as<uint8_t>();
+    if (doc.containsKey(csBrightness)) {
+        uint8_t br = doc[csBrightness].as<uint8_t>();
         stripBrightnessLocked = br > 0;
         stripBrightness = stripBrightnessLocked ? br : adjustStripBrightness();
-        upd[strBrightness] = stripBrightness;
-        upd[strBrightnessLocked] = stripBrightnessLocked;
+        upd[csBrightness] = stripBrightness;
+        upd[csBrightnessLocked] = stripBrightnessLocked;
     }
     if (doc.containsKey(csAudioThreshold)) {
         audioBumpThreshold = doc[csAudioThreshold].as<uint16_t>();

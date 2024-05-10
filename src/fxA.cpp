@@ -35,16 +35,10 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc), state(Fade), refPixel(&segRight[
     fxRegistry.registerEffect(this);
 }
 
-uint8_t excludeActiveColors(uint8_t hue) {
-    return 24 + hue%105;
-//    uint8_t res = hue;
-//    if (res <= HUE_ORANGE)
-//        res = HUE_ORANGE*2-res;
-//    if (res >= HUE_BLUE && res <= HUE_PURPLE)
-//        res = HUE_BLUE*2-res;
-//    if (res >= (HUE_PINK + 16))
-//        res -= 16;
-//    return res;
+uint8_t excludeActiveColors(const uint8_t hue) {
+    const uint8_t min = HUE_ORANGE-8;     //24       (~33°)
+    const uint8_t max = HUE_AQUA;         //128      (180°)
+    return scale8(sin8(hue), (max-min)) + min;
 }
 
 void SleepLight::setup() {
@@ -56,7 +50,7 @@ void SleepLight::setup() {
 //    colorBuf.hue = excludeActiveColors(secRandom8());
 //    colorBuf.sat = secRandom8(24, 128);
 //    colorBuf.val = brightness;
-    colorBuf.hue = HSVHue::HUE_YELLOW-16;
+    colorBuf.hue = excludeActiveColors(HSVHue::HUE_YELLOW-16);
     colorBuf.sat = 160;
     colorBuf.val = brightness;
     Log.infoln(F("SleepLight setup: colorBuf=%r, hue=%d, sat=%d, val=%d"), (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val);
@@ -84,7 +78,7 @@ void SleepLight::run() {
         }
         EVERY_N_SECONDS(11) {
             colorBuf.hue = excludeActiveColors(colorBuf.hue + random8(2, 19));
-            colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 48, 160);
+            colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 24, 160);
             state = colorBuf.val > minBrightness ? FadeColorTransition : SleepTransition;
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
         }
@@ -123,7 +117,7 @@ SleepLight::SleepLightState SleepLight::step() {
 }
 
 uint8_t SleepLight::selectionWeight() const {
-    return LedEffect::selectionWeight();
+    return 0;   //we don't want this effect part of the random selection of entertaining light effects
 }
 
 void SleepLight::windDownPrep() {

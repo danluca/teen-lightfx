@@ -1,6 +1,22 @@
 
 // Only one sequence can be selected
 let config = {};
+//canvasjs column chart options
+let histOptions = {
+    theme: "light2",
+    backgroundColor: "#F4F4FD",
+    title: {
+        text: "Audio Levels",
+        fontSize: 18
+    },
+    data: [
+        {
+            type: "column",
+            dataPoints: [
+            ]
+        }
+    ]
+};
 
 $(() => {
 
@@ -47,7 +63,7 @@ function getStatus() {
             $('#status h1').removeClass('red');
             $('#boardTemp').html(`${data.boardTemp.toFixed(2)} °C (${(data.boardTemp*9/5+32).toFixed(2)} °F)`);
             $('#rangeTemp').html(`[${data.boardMinTemp.toFixed(2)} - ${data.boardMaxTemp.toFixed(2)}] °C (chip ${data.chipTemp.toFixed(2)} °C)`);
-            $('#boardVcc').html(data.vcc.toFixed(2));
+            $('#boardVcc').html(`${data.vcc.toFixed(2)} V`);
             $('#rangeVcc').html(`[${data.minVcc.toFixed(2)} - ${data.maxVcc.toFixed(2)}] V`);
             $('#mbedVersion').html(`${data.mbedVersion}`);
             $('#audioThreshold').html(`${data.fx.audioThreshold}`);
@@ -65,17 +81,31 @@ function getStatus() {
             $('#pastEffects').html(`${data.fx.pastEffects.reverse().join(', ')}`);
             $('#fxCurHoliday').html(`${data.fx.holiday}`);
             $('#totalAudioBumps').html(`${data.fx.totalAudioBumps}`);
-            let strHistogram = data.fx.audioHist.map((elem, ix)=>
-                `${data.fx.audioThreshold+ix*500} - ${data.fx.audioThreshold+(ix+1)*500}${ix===(data.fx.audioHist.length-1)?'+':''} : ${elem}`)
-                .join('<br/>');
-            $('#audioLevelHistogram').html(`${strHistogram}`);
+            let lblHistogram = data.fx.audioHist.map((elem, ix)=>
+                `${ix===(data.fx.audioHist.length-1)?'>':''}${data.fx.audioThreshold+ix*500}`);
+                // `${(data.fx.audioThreshold+ix*500)/1000} - ${(data.fx.audioThreshold+(ix+1)*500)/1000}k${ix===(data.fx.audioHist.length-1)?'+':''}`);
+                // `${data.fx.audioThreshold+ix*500} - ${data.fx.audioThreshold+(ix+1)*500}${ix===(data.fx.audioHist.length-1)?'+':''} : ${elem}`);
+            //$('#audioLevelHistogram').html(`${lblHistogram.join('<br/>')}`);
+            histOptions.data[0].dataPoints = data.fx.audioHist.map((elem, ix) => {
+                return { label: lblHistogram[ix], y: elem };
+            });
+            $("#audioHistogram").CanvasJSChart(histOptions);
             $('#timeNtp').html(`${data.time.ntpSync == 2}`);
             $('#timeCurrent').html(`${data.time.date} ${data.time.time} ${data.time.dst?"CDT":"CST"}`);
             $('#timeHoliday').html(`${data.time.holiday}`);
+            $('#lastDrift').html(`${data.time.lastDrift} ms`);
+            $('#avgDrift').html(`${data.time.averageDrift} ms/hr`);
+            $('#totalDrift').html(`${data.time.totalDrift} ms (${data.time.syncSize} sync points @ 17 hrs)`);
+
+            let strAlarms = "";
+            data.time.alarms.sort((a, b) => a.timeLong - b.timeLong);
+            data.time.alarms.forEach(al =>  strAlarms += `<li>${al.timeFmt} (${al.type})</li>`);
+            let strAlarmsEnabled = data.fx.sleepEnabled ? "" : "<i>(alarms disabled)</i>"
+            $('#schAlarms').html(`${strAlarmsEnabled}${strAlarms.length > 0 ? "<br/><ul>"+strAlarms+"</ul>" : ": None"}`);
 
             //update the current effect tiles as well
-            $('#curEffectId').html(`Index: ${data.fx.index}`);
-            let desc = config.fx.find(x=> x.registryIndex === data.fx.index)?.description ?? "N/A";
+            $('#curEffectId').html(`index: ${data.fx.index}`);
+            let desc = config?.fx?.find(x=> x.registryIndex === data.fx.index)?.description ?? "N/A";
             $('#curEffect').html(`${data.fx.name} - ${desc}`);
             $('#autoFxChange').prop("checked", data.fx.auto);
             let fxlst = $('#fxlist');
@@ -91,6 +121,7 @@ function getStatus() {
             let brList = $('#brightList');
             brList.val(brPerc);
             brList.attr("currentBrightness", brPerc);
+
         })
         .fail(function (req, textStatus, error){
             console.log(`status.json call failed ${textStatus} - ${error}`);

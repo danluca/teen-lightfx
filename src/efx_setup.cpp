@@ -7,13 +7,19 @@
 //~ Global variables definition
 #define STATE_JSON_DOC_SIZE   512
 const uint8_t dimmed = 20;
-const char csAutoFxRoll[] = "autoFxRoll";
-const char csStripBrightness[] = "stripBrightness";
-const char csAudioThreshold[] = "audioThreshold";
-const char csColorTheme[] = "colorTheme";
-const char csAutoColorAdjust[] = "autoColorAdjust";
-const char csRandomSeed[] = "randomSeed";
-const char csCurFx[] = "curFx";
+const char csAutoFxRoll[] PROGMEM = "autoFxRoll";
+const char csStripBrightness[] PROGMEM = "stripBrightness";
+const char csAudioThreshold[] PROGMEM = "audioThreshold";
+const char csColorTheme[] PROGMEM = "colorTheme";
+const char csAutoColorAdjust[] PROGMEM = "autoColorAdjust";
+const char csRandomSeed[] PROGMEM = "randomSeed";
+const char csCurFx[] PROGMEM = "curFx";
+const char csBrightness[] PROGMEM = "brightness";
+const char csBrightnessLocked[] PROGMEM = "brightnessLocked";
+const char csAuto[] PROGMEM = "auto";
+const char csHoliday[] PROGMEM = "holiday";
+const char strNR[] PROGMEM = "N/R";
+
 
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
 const CRGB BKG = CRGB::Black;
@@ -139,12 +145,9 @@ void adjustCurrentEffect(time_t time) {
     }
     if (nextAlarm != nullptr) {
         switch (nextAlarm->type) {
-            case BEDTIME:
-                fxRegistry.nextEffectPos(FX_QUIET_ID);
-                break;
-            case WAKEUP:
-                fxRegistry.nextEffectPos(FX_SLEEPLIGHT_ID);
-                break;
+            case BEDTIME: quiet(); break;
+            case WAKEUP: sleepOn(); break;
+            case ALARM_OFF: getDayType(time) == NotHome ? quiet() : wakeupOn(); break;
             default:
                 break;
         }
@@ -169,8 +172,10 @@ bool isSleepTime(const time_t time = 0) {
  * <p>This needs to account for ALL global variables</p>
  */
 void resetGlobals() {
-    //turn off the LEDs on the strip and the frame buffer
-    FastLED.clear(true);
+    //turn off the LEDs on the strip and the frame buffer - flush to the LED strip if we have the time and not in sleep time
+    //flushing to strip may cause a short blink if called mid-effect, like an audio effect bump would do for the same effect when sleeping
+    bool flushStrip = isSysStatus(SYS_STATUS_NTP) && !isSleepTime();
+    FastLED.clear(flushStrip);
     FastLED.setBrightness(BRIGHTNESS);
     frame.fill_solid(BKG);
 
@@ -740,6 +745,9 @@ uint16_t EffectRegistry::nextEffectPos() {
     if (!autoSwitch)
         return currentEffect;
     currentEffect = inc(currentEffect, 1, effectsCount);
+    //increment past the sleep effect, if landed on it
+    if (currentEffect == sleepEffect)
+        currentEffect = inc(currentEffect, 1, effectsCount);
     transitionEffect();
     return lastEffectRun;
 }
@@ -758,7 +766,7 @@ uint16_t EffectRegistry::nextRandomEffectPos() {
         for (uint16_t i = 0; i < effectsCount; ++i) {
             rnd = qsuba(rnd, effects[i]->selectionWeight());
             if (rnd == 0) {
-                currentEffect = i;
+                currentEffect = i;  //sleep effect weight is 0, so it cannot be chosen randomly
                 break;
             }
         }
@@ -778,8 +786,11 @@ void EffectRegistry::transitionEffect() const {
 uint16_t EffectRegistry::registerEffect(LedEffect *effect) {
     effects.push_back(effect);  //pushing from the back to preserve the order or insertion during iteration
     effectsCount = effects.size();
-    Log.infoln(F("Effect [%s] registered successfully at index %d"), effect->name(), effectsCount-1);
-    return effectsCount-1;
+    uint16_t fxIndex = effectsCount - 1;
+    if (strcmp(FX_SLEEPLIGHT_ID, effect->name()) == 0)
+        sleepEffect = fxIndex;
+    Log.infoln(F("Effect [%s] registered successfully at index %d"), effect->name(), fxIndex);
+    return fxIndex;
 }
 
 LedEffect *EffectRegistry::findEffect(const char *id) {
@@ -827,6 +838,10 @@ bool EffectRegistry::isAutoRoll() const {
     return autoSwitch;
 }
 
+bool EffectRegistry::isAsleep() const {
+    return sleepState;
+}
+
 uint16_t EffectRegistry::size() const {
     return effectsCount;
 }
@@ -834,6 +849,10 @@ uint16_t EffectRegistry::size() const {
 void EffectRegistry::pastEffectsRun(JsonArray &json) {
     for (const auto &fxIndex: lastEffects)
         json.add(getEffect(fxIndex)->name());
+}
+
+void EffectRegistry::setSleepState(bool sleepFlag) {
+    sleepState = sleepFlag;
 }
 
 // LedEffect
@@ -942,9 +961,9 @@ void LedEffect::loop() {
 }
 
 /**
- * Implementation of desired state - informs the state machine of the intended step state and causes it to react.
+ * Implementation of desired state - informs the state machine of the intended next state and causes it to react.
  * This means either transitioning to an interim state that precedes the desired state, or directly switch to desired state
- * @param dst intended step state
+ * @param dst intended next state
  */
 void LedEffect::desiredState(EffectState dst) {
     if (state == dst)
@@ -1075,6 +1094,7 @@ void fx_run() {
     }
     EVERY_N_SECONDS(30) {
         if (partyMode && fxBump) {
+            Log.infoln(F("Audio triggered effect incremental change"));
             fxRegistry.nextEffectPos();
             fxBump = false;
             totalAudioBumps++;
@@ -1086,16 +1106,26 @@ void fx_run() {
             maxVcc = msmt;
 #ifndef DISABLE_LOGGING
         Log.infoln(F("Board Vcc voltage %D V"), msmt);
-        Log.infoln(F("Chip internal temperature %D 'C"), chipTemperature());
+        // Serial console doesn't seem to work well with UTF-8 chars, hence not using ª symbol for degree.
+        // Can also try using wchar_t type. Unsure ArduinoLog library supports it well. All in all, not worth digging much into it - only used for troubleshooting
+        msmt = chipTemperature();
+        Log.infoln(F("Chip internal temperature %D 'C (%D 'F)"), msmt, toFahrenheit(msmt));
 #endif
         msmt = boardTemperature();
+        if (msmt != IMU_TEMPERATURE_NOT_AVAILABLE) {
         if (msmt < minTemp)
             minTemp = msmt;
         if (msmt > maxTemp)
             maxTemp = msmt;
     }
+#ifndef DISABLE_LOGGING
+        Log.infoln(F("Board temperature %D 'C (%D 'F); range [%D - %D] 'C"), msmt, toFahrenheit(msmt), minTemp, maxTemp);
+        Log.infoln(F("Current time: %y"), now());
+#endif
+    }
     EVERY_N_MINUTES(7) {
         if (partyMode) {
+            Log.infoln(F("Switching effect to a new random one"));
             fxRegistry.nextRandomEffectPos();
             shuffleIndexes(stripShuffleIndex, NUM_PIXELS);
             stripBrightness = adjustStripBrightness();
@@ -1111,6 +1141,7 @@ void fx_run() {
 // FxSchedule functions
 void wakeupOn() {
     fxRegistry.nextEffectPos("FXB2");
+    fxRegistry.setSleepState(false);
 }
 
 void wakeupOff() {
@@ -1119,6 +1150,7 @@ void wakeupOff() {
 
 void sleepOn() {
     fxRegistry.nextEffectPos(FX_SLEEPLIGHT_ID);
+    fxRegistry.setSleepState(true);
 }
 
 void sleepOff() {
@@ -1127,4 +1159,5 @@ void sleepOff() {
 
 void quiet() {
     fxRegistry.nextEffectPos(FX_QUIET_ID);
+    fxRegistry.setSleepState(false);
 }

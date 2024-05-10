@@ -8,10 +8,10 @@
 using namespace colTheme;
 const char ssid[] PROGMEM = WF_SSID;
 const char pass[] PROGMEM = WF_PSW;
-const char hostname[] PROGMEM = "Arduino Board " BOARD_NAME;
+const char hostname[] PROGMEM = "Arduino-RP2040-" BOARD_NAME;
 
 const CRGB CLR_ALL_OK = CRGB::Indigo;
-const CRGB CLR_SETUP_IN_PROGRESS = CRGB::Green;
+const CRGB CLR_SETUP_IN_PROGRESS = CRGB::Yellow;
 const CRGB CLR_SETUP_ERROR = CRGB::Red;
 
 WiFiUDP Udp;  // A UDP instance to let us send and receive packets over UDP

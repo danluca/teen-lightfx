@@ -41,14 +41,13 @@ void setup() {
     Scheduler.startLoop(&fxTasks, 3072);
     Scheduler.startLoop(&micTasks, 1024);
 
+    stateLED(CLR_SETUP_IN_PROGRESS);    //Setup in progress
     bool bSetupOk = wifi_setup();
     bSetupOk = bSetupOk && time_setup();
-    if (bSetupOk)
-        stateLED(CLR_ALL_OK);   //ready for awesome light management
-    else
-        stateLED(CLR_SETUP_ERROR);
+    stateLED(bSetupOk ? CLR_ALL_OK : CLR_SETUP_ERROR);
 
     setupAlarmSchedule();
+
     Log.infoln(F("System status: %X"), getSysStatus());
 }
 

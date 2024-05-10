@@ -12,6 +12,7 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 
 */
 #pragma once
+
 #include <inttypes.h>
 #include <stdarg.h>
 #include <mbed.h>
@@ -21,7 +22,9 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #if ARDUINO < 100
 	#include "WProgram.h"
 #else
+
 	#include "Arduino.h"
+
 #endif
 
 // PGM stubs to facilitate use in non-Arduino test environments
@@ -31,7 +34,9 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #define PSTR(str) (str)
 #define F(string_literal) (reinterpret_cast<const __FlashStringHelper *>(PSTR(string_literal)))
 #endif
+
 typedef void (*printfunction)(Print*, int);
+
 typedef void (*printFmtFunc)(Print*, const char, va_list*);
 
 #ifndef DISABLE_LOGGING
@@ -53,19 +58,17 @@ extern rtos::Mutex serial_mtx;
 #define LOG_LEVEL_VERBOSE 6
 
 #define CR "\n"
-#define LOGGING_VERSION 1_0_4
+#define LOGGING_VERSION 1_1_1
 
 /**
- * Logging is a helper class to output informations over
- * RS232. If you know log4j or log4net, this logging class
- * is more or less similar ;-) <br>
+ * Logging is a helper class to output informations over RS232.
+ * If you know log4j or log4net, this logging class is more or less similar ;-) <br>
  * Different loglevels can be used to extend or reduce output
  * All methods are able to handle any number of output parameters.
  * All methods print out a formated string (like printf).<br>
  * To reduce output and program size, reduce loglevel.
  * 
- * Output format string can contain below wildcards. Every wildcard
- * must be start with percent sign (\%)
+ * Output format string can contain below wildcards. Every wildcard must be start with percent sign (\%)
  * 
  * ---- Wildcards
  * 
@@ -79,6 +82,12 @@ extern rtos::Mutex serial_mtx;
  * %B	like %x but combine with 0b10100011
  * %t	replace and convert boolean value into "t" or "f"
  * %T	like %t but convert into "true" or "false"
+ * %L   like %l but output is in hex
+ * %D,%F   replace with a decimal double value (float is upcasted)
+ * %p   replace with Printable's arg own representation (arg must be a Printable)
+ * %u   replace with unsigned long
+ * %U   like %u but output is in hex
+ * %C   like %c but non-ASCII chars are output in hex
  * 
  * ---- Loglevels
  * 
@@ -92,8 +101,7 @@ extern rtos::Mutex serial_mtx;
  * 6 - LOG_LEVEL_VERBOSE    all
  */
 
-class Logging
-{
+class Logging {
 public:
 	/**
 	 * default Constructor
@@ -205,13 +213,15 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-  template <class T, typename... Args> void fatal(T msg, Args... args){
+    template<class T, typename... Args>
+    void fatal(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_FATAL, false, msg, args...);
 #endif
   }
 
-  template <class T, typename... Args> void fatalln(T msg, Args... args){
+    template<class T, typename... Args>
+    void fatalln(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_FATAL, true, msg, args...);
 #endif
@@ -227,17 +237,20 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-  template <class T, typename... Args> void error(T msg, Args... args){
+    template<class T, typename... Args>
+    void error(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_ERROR, false, msg, args...);
 #endif
   }
   
-   template <class T, typename... Args> void errorln(T msg, Args... args){
+    template<class T, typename... Args>
+    void errorln(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_ERROR, true, msg, args...);
 #endif
   } 
+
 	/**
 	 * Output a warning message. Output message contains
 	 * W: followed by original message
@@ -248,13 +261,15 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-  template <class T, typename... Args> void warning(T msg, Args...args){
+    template<class T, typename... Args>
+    void warning(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_WARNING, false, msg, args...);
 #endif
   }
   
-   template <class T, typename... Args> void warningln(T msg, Args...args){
+    template<class T, typename... Args>
+    void warningln(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_WARNING, true, msg, args...);
 #endif
@@ -262,7 +277,7 @@ public:
 
 	/**
 	 * Output a notice message. Output message contains
-	 * N: followed by original message
+     * I: followed by original message
 	 * Notice messages are printed out at
 	 * loglevels >= LOG_LEVEL_NOTICE
 	 * 
@@ -270,25 +285,29 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-  template <class T, typename... Args> void notice(T msg, Args...args){
+    template<class T, typename... Args>
+    void notice(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_NOTICE, false, msg, args...);
 #endif
   }
   
-  template <class T, typename... Args> void noticeln(T msg, Args...args){
+    template<class T, typename... Args>
+    void noticeln(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_NOTICE, true, msg, args...);
 #endif
   }  
 
-  template <class T, typename... Args> void info(T msg, Args...args) {
+    template<class T, typename... Args>
+    void info(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
 	  printLevel(LOG_LEVEL_INFO, false, msg, args...);
 #endif
   }
 
-  template <class T, typename... Args> void infoln(T msg, Args...args) {
+    template<class T, typename... Args>
+    void infoln(T msg, Args...args) {
 #ifndef DISABLE_LOGGING
 	  printLevel(LOG_LEVEL_INFO, true, msg, args...);
 #endif
@@ -296,7 +315,7 @@ public:
 
 	/**
 	 * Output a trace message. Output message contains
-	 * N: followed by original message
+     * T: followed by original message
 	 * Trace messages are printed out at
 	 * loglevels >= LOG_LEVEL_TRACE
 	 * 
@@ -304,13 +323,15 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	*/
-  template <class T, typename... Args> void trace(T msg, Args... args){
+    template<class T, typename... Args>
+    void trace(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_TRACE, false, msg, args...);
 #endif
   }
 
-  template <class T, typename... Args> void traceln(T msg, Args... args){
+    template<class T, typename... Args>
+    void traceln(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_TRACE, true, msg, args...);
 #endif
@@ -326,13 +347,15 @@ public:
 	 * \param ... any number of variables
 	 * \return void
 	 */
-  template <class T, typename... Args> void verbose(T msg, Args... args){
+    template<class T, typename... Args>
+    void verbose(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_VERBOSE, false, msg, args...);
 #endif
   }
 
-  template <class T, typename... Args> void verboseln(T msg, Args... args){
+    template<class T, typename... Args>
+    void verboseln(T msg, Args... args) {
 #ifndef DISABLE_LOGGING
     printLevel(LOG_LEVEL_VERBOSE, true, msg, args...);
 #endif
@@ -343,8 +366,7 @@ private:
 
 	void print(const __FlashStringHelper *format, va_list args);
 
-	void print(const Printable& obj, va_list args)
-	{
+    void print(const Printable &obj, va_list args) {
 #ifndef DISABLE_LOGGING
 		_logOutput->print(obj);
 #endif
@@ -352,24 +374,21 @@ private:
 
 	void printFormat(const char format, va_list *args);
 
-	template <class T> void printLevel(int level, bool cr, T msg, ...)
-	{
+    template<class T>
+    void printLevel(int level, bool cr, T msg, ...) {
 #ifndef DISABLE_LOGGING
-		if (level > _level)
-		{
+        if (level > _level) {
 			return;
 		}
 
-        serial_mtx.lock();
+        mbed::ScopedLock<rtos::Mutex> lock(serial_mtx);
 
-		if (level < LOG_LEVEL_SILENT) 
-		{
+        if (level < LOG_LEVEL_SILENT) {
 			level = LOG_LEVEL_SILENT;
 		}
 			
 
-		if (_prefix != nullptr)
-		{
+        if (_prefix != nullptr) {
 			_prefix(_logOutput, level);
 		}
 
@@ -383,15 +402,13 @@ private:
 		va_start(args, msg);
 		print(msg, args);
 
-		if(_suffix != nullptr)
-		{
+        if (_suffix != nullptr) {
 			_suffix(_logOutput, level);
 		}
-		if (cr)
-		{
+        if (cr) {
 		    _logOutput->print(CR);
 		}
-        serial_mtx.unlock();
+        //serial_mtx.unlock();
 #endif
 	}
 

@@ -27,6 +27,10 @@ enum AlarmType {
     WAKEUP, BEDTIME, ALARM_OFF
 };
 
+const char* alarmTypeToString(AlarmType alType);
+uint countFutureAlarms(AlarmType alType, time_t refTime);
+DayType getDayType(time_t time = 0);
+
 struct Interval {
     uint16_t start; //inclusive
     uint16_t end;   //exclusive

@@ -3,6 +3,7 @@
 
 #include "FxSchedule.h"
 #include "FastLED.h"
+#include "global.h"
 #include "timeutil.h"
 #include "log.h"
 
@@ -12,6 +13,10 @@
 #define DEFAULT_WEEKEND_BEDTIME     (DEFAULT_SCHOOLDAY_BEDTIME + SECS_PER_HOUR) //9:00pm bedtime weekend, day off
 #define DEFAULT_VACATION_BEDTIME    (DEFAULT_WEEKEND_BEDTIME + SECS_PER_HOUR)   //10:00pm bedtime vacation
 #define DEFAULT_SLEEP_IN            (2*SECS_PER_HOUR)
+
+const char strWakeup[] PROGMEM = "Wake-Up";
+const char strBedtime[] PROGMEM = "Bed-time";
+const char strAlarmOff[] PROGMEM = "Alarm Off";
 
 time_t wakeupTimeOn = DEFAULT_WAKEUP_TIME_ON;
 time_t wakeupTimeOff = DEFAULT_WAKEUP_TIME_OFF;
@@ -40,6 +45,43 @@ time_t getBedTime(time_t startDay) {
         case Vacation: bedTime+=vacationBedTime; break;
     }
     return bedTime;
+}
+
+/**
+ * Counts scheduled alarms of a particular type that haven't yet triggered (are in the future with respect to given time reference)
+ * @param alType alarm type
+ * @param refTime time reference
+ * @return how many scheduled alarms fit the criteria above
+ */
+uint countFutureAlarms(const AlarmType alType, const time_t refTime) {
+    uint count = 0;
+    for (const auto &al : scheduledAlarms) {
+        if (al->value > refTime && al->type == alType)
+            count++;
+    }
+    return count;
+}
+
+DayType getDayType(const time_t time) {
+    time_t refTime = time == 0 ? now() : time;
+    uint16_t today = encodeMonthDay(refTime);
+    DayType dayType = NotHome;
+    for (auto &i: schoolSchedule) {
+        if (today >= i.start && today < i.end) {
+            dayType = i.type;
+            break;
+        }
+    }
+    return dayType;
+}
+
+const char *alarmTypeToString(AlarmType alType) {
+    switch (alType) {
+        case WAKEUP: return strWakeup;
+        case BEDTIME: return strBedtime;
+        case ALARM_OFF: return strAlarmOff;
+        default: return strNR;
+    }
 }
 
 void scheduleSchoolDay(time_t time) {
@@ -77,20 +119,7 @@ void scheduleDayOff(time_t time) {
 }
 
 void scheduleVacation(time_t time) {
-    time_t startDay = previousMidnight(time);
-
-    uint8_t curAlarmCount = scheduledAlarms.size();
-    //wake-up if not passed it
-    if ((time-startDay) < wakeupTimeOn + DEFAULT_SLEEP_IN) {
-        time_t upOn = startDay + wakeupTimeOn + DEFAULT_SLEEP_IN;
-        time_t upOff = startDay + wakeupTimeOff + DEFAULT_SLEEP_IN;
-        scheduledAlarms.push_back(new AlarmData{.value=upOn, .type=WAKEUP, .onEventHandler=wakeupOn});
-        scheduledAlarms.push_back(new AlarmData{.value=upOff, .type=ALARM_OFF, .onEventHandler=wakeupOff});
-    }
-    //sleep
-    time_t bedTime = getBedTime(startDay);
-    scheduledAlarms.push_back(new AlarmData {.value=bedTime, .type=BEDTIME, .onEventHandler=sleepOn});
-    Log.infoln(F("Scheduled %d alarms for Vacation Day %y"), scheduledAlarms.size() - curAlarmCount, time);
+    scheduleDayOff(time);
 }
 
 void scheduleNotHome(time_t time) {
@@ -103,6 +132,9 @@ void scheduleNotHome(time_t time) {
     Log.infoln(F("Scheduled 1 alarms for Not Home Day %y"), time);
 }
 
+/**
+ * Logs the alarms to the console - info level
+ */
 void logAlarms() {
     for (const auto &al : scheduledAlarms)
         Log.infoln(F("Alarm %X type %d scheduled for %y; handler %X"), (long)al, al->type, al->value, (long)al->onEventHandler);
@@ -110,7 +142,6 @@ void logAlarms() {
 
 /**
  * Setup the default sleep/wake-up schedule for the school year
- * TODO: how to save and read from JSON?
  */
 void setupAlarmSchedule() {
     //alarms for today
@@ -135,11 +166,15 @@ void setupAlarmSchedule() {
         }
     }
     if (interval != nullptr) {
+        uint8_t wakeAlarmCount = countFutureAlarms(WAKEUP, time);
+        uint8_t sleepAlarmCount = countFutureAlarms(BEDTIME, time);
+        uint8_t offAlarmCount = countFutureAlarms(ALARM_OFF, time);
+        bool incompleteAlarmSet = (wakeAlarmCount+sleepAlarmCount+offAlarmCount) < 3;
         switch (interval->type) {
-            case School: scheduleSchoolDay(time); break;
-            case DayOff: scheduleDayOff(time); break;
-            case Vacation: scheduleVacation(time); break;
-            case NotHome: scheduleNotHome(time); break;
+            case School: if (incompleteAlarmSet) scheduleSchoolDay(time); break;
+            case DayOff: if (incompleteAlarmSet) scheduleDayOff(time); break;
+            case Vacation: if (incompleteAlarmSet) scheduleVacation(time); break;
+            case NotHome: if (offAlarmCount < 1) scheduleNotHome(time); break;
         }
     }
     adjustCurrentEffect(time);
@@ -162,8 +197,14 @@ void alarm_loop() {
             } else
                 ++it;
         }
-        Log.infoln(F("Alarms remaining:"));
-        logAlarms();
+        //if no more alarms - attempt to schedule next ones
+        if (scheduledAlarms.empty()) {
+            Log.infoln(F("Alarms queue empty - schedule more"));
+            setupAlarmSchedule();
+        } else {
+            Log.infoln(F("Alarms remaining:"));
+            logAlarms();
+        }
 
 //        for (size_t x = 0; x < scheduledAlarms.size(); x++) {
 //            AlarmData *al = scheduledAlarms.front();
