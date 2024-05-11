@@ -65,6 +65,7 @@ int32_t dist = 1;
 bool stripBrightnessLocked = false;
 bool dirFwd = true;
 bool randhue = true;
+bool firstRun = true;
 float minVcc = 12.0f;
 float maxVcc = 0.0f;
 float minTemp = 100.0f;
@@ -131,27 +132,19 @@ void saveState() {
 }
 
 void adjustCurrentEffect(time_t time) {
-    //figure out the current effect - the default effect is quiet, but if we are past midnight before wakeup, we need to be sleep light
-    AlarmData *nextAlarm = nullptr;
-    time_t delta = 0;
+    //figure out the current effect - which is the result of running the previous alarm, if one exist or quiet otherwise
+    AlarmData *prevAlarm = nullptr;
+    time_t delta = 0xFFFFFF;        //about 194 days worth of seconds
     for (const auto &al : scheduledAlarms) {
-        if (al->value >= time) {
-            time_t alDelta = al->value - time;
-            if (delta == 0 || alDelta < delta) {
-                delta = alDelta;
-                nextAlarm = al;
-            }
+        if (al->value < time && (time - al->value) < delta) {
+            delta = time - al->value;
+            prevAlarm = al;
         }
     }
-    if (nextAlarm != nullptr) {
-        switch (nextAlarm->type) {
-            case BEDTIME: quiet(); break;
-            case WAKEUP: sleepOn(); break;
-            case ALARM_OFF: getDayType(time) == NotHome ? quiet() : wakeupOn(); break;
-            default:
-                break;
-        }
-    }
+    if (prevAlarm != nullptr)
+        prevAlarm->onEventHandler();
+    else
+        quiet();
 }
 
 /**

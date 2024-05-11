@@ -78,6 +78,7 @@ extern bool dirFwd;
 extern int8_t rot;
 extern int32_t dist;
 extern bool randhue;
+extern bool firstRun;
 extern volatile uint16_t audioBumpThreshold;
 extern volatile uint16_t maxAudio[AUDIO_HIST_BINS_COUNT];
 extern uint16_t totalAudioBumps;
