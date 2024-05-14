@@ -136,7 +136,7 @@ void adjustCurrentEffect(time_t time) {
     AlarmData *prevAlarm = nullptr;
     time_t delta = 0xFFFFFF;        //about 194 days worth of seconds
     for (const auto &al : scheduledAlarms) {
-        if (al->value < time && (time - al->value) < delta) {
+        if (al->value <= time && (time - al->value) <= delta) {
             delta = time - al->value;
             prevAlarm = al;
         }

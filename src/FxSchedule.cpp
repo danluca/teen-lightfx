@@ -88,7 +88,7 @@ uint countTodayAlarms(const AlarmType alType, const time_t refTime) {
     uint count = 0;
     for (const auto &al : scheduledAlarms) {
         if (al->type == alType && al->value >= startDay && al->value < startNextDay)
-            count++
+            count++;
     }
     return count;
 }
