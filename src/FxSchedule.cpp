@@ -123,21 +123,7 @@ void scheduleDay(const time_t time) {
     DayType todayType = getDayType(time);
     DayType tomorrowType = getDayType(startNextDay);
 
-    uint8_t curAlarmCount = scheduledAlarms.size();
-    if (curAlarmCount == 0) {
-        //for today, determine the alarms to set - one in the past such that its event becomes the current state
-        //the future alarms from the current time are down below
-        time_t wakeupToday = getWakeupOn(startDay, todayType);
-        time_t alarmOffToday = getAlarmOff(startDay, todayType);
-        time_t bedtimeToday = getBedTime(startDay, tomorrowType);
-        AlarmType alType;
-        if (time > wakeupToday && wakeupToday > 0)
-            alType = WAKEUP;
-        if (time > alarmOffToday)
-            alType = ALARM_OFF;
-        if (time > bedtimeToday && bedtimeToday > 0)
-            alType = BEDTIME;
-    }
+    size_t curAlarmCount = scheduledAlarms.size();
     //wakeup
     if (countFutureAlarms(WAKEUP, time) < 1) {
         //wake-up today if not passed it, tomorrow if we did
@@ -155,7 +141,7 @@ void scheduleDay(const time_t time) {
         time_t alarmOffToday = getAlarmOff(startDay, todayType);
         time_t alarmOffTomorrow = getAlarmOff(startNextDay, tomorrowType);
         if (time < alarmOffToday)
-            scheduledAlarms.push_back(new AlarmData{.value=alarmOffToday, .type=ALARM_OFF, .onEventHandler=wakeupOn});
+            scheduledAlarms.push_back(new AlarmData{.value=alarmOffToday, .type=ALARM_OFF, .onEventHandler=wakeupOff});
         else if (alarmOffTomorrow > 0)
             scheduledAlarms.push_back(new AlarmData{.value=alarmOffTomorrow, .type=ALARM_OFF, .onEventHandler=wakeupOff});
     }
@@ -197,7 +183,9 @@ void setupAlarmSchedule() {
 
     if (firstRun) {
         //it is the first run, create alarms for today and execute the previous one relative to current time
+        Log.infoln(F("First run - setup alarm schedule and determine current effect for time %y"), time);
         scheduleDay(previousMidnight(time));
+        logAlarms();
         adjustCurrentEffect(time);
         //remove all the alarms, we'll create the new ones based on the current time
         for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {

@@ -141,10 +141,13 @@ void adjustCurrentEffect(time_t time) {
             prevAlarm = al;
         }
     }
-    if (prevAlarm != nullptr)
+    if (prevAlarm != nullptr) {
+        Log.infoln(F("Current Effect - triggering previous alarm %X type %d scheduled for %y; handler %X"), (long)prevAlarm, prevAlarm->type, prevAlarm->value, (long)prevAlarm->onEventHandler);
         prevAlarm->onEventHandler();
-    else
+    } else {
+        Log.infoln(F("Current Effect - no previous alarm found, default to quiet"));
         quiet();
+    }
 }
 
 /**
