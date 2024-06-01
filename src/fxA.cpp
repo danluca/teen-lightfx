@@ -32,7 +32,6 @@ SleepLight::SleepLight() : LedEffect(fxa1Desc), state(Fade), refPixel(&segRight[
     slOffSegs.push_front(segLeft(segLeft.size()/2+2, segLeft.size()-6));
     slOffSegs.push_front(segBack(5, segBack.size()/2-2));
     slOffSegs.push_front(segBack(segBack.size()/2+2, segBack.size()-10));
-    fxRegistry.registerEffect(this);
 }
 
 uint8_t excludeActiveColors(const uint8_t hue) {
