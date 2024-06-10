@@ -45,7 +45,7 @@ CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = 128;
+uint8_t brightness = 96;
 uint8_t stripBrightness = brightness;
 bool partyMode = false;
 uint8_t colorIndex = 10;

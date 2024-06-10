@@ -75,7 +75,7 @@ void SleepLight::run() {
             state = colorBuf.val > minBrightness ? FadeColorTransition : SleepTransition;
             Log.infoln(F("SleepLight parameters: state=%d, colorBuf=%r HSV=(%d,%d,%d), refPixel=%r"), state, (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val, *refPixel);
         }
-        EVERY_N_SECONDS(11) {
+        EVERY_N_SECONDS(21) {
             hue += random8(2, 19);
             colorBuf.hue = excludeActiveColors(hue);
             colorBuf.sat = map(colorBuf.val, minBrightness, brightness, 24, 160);
