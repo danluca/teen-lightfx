@@ -51,7 +51,7 @@ void SleepLight::setup() {
 //    colorBuf.val = brightness;
     hue = colorBuf.hue = excludeActiveColors(0);
     colorBuf.sat = 160;
-    colorBuf.val = brightness;
+    colorBuf.val = brightness-24;
     Log.infoln(F("SleepLight setup: colorBuf=%r, hue=%d, sat=%d, val=%d"), (CRGB)colorBuf, colorBuf.hue, colorBuf.sat, colorBuf.val);
 }
 

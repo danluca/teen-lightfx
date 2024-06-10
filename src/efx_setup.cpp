@@ -45,7 +45,7 @@ CRGBSet segBack(leds, SEG_BACK_START, NUM_PIXELS-1);
 CRGBPalette16 palette;
 CRGBPalette16 targetPalette;
 OpMode mode = Chase;
-uint8_t brightness = 96;
+uint8_t brightness = 128;
 uint8_t stripBrightness = brightness;
 bool partyMode = false;
 uint8_t colorIndex = 10;
@@ -1108,12 +1108,12 @@ void fx_run() {
         Log.infoln(F("Chip internal temperature %D 'C (%D 'F)"), msmt, toFahrenheit(msmt));
 #endif
         msmt = boardTemperature();
-        if (msmt != IMU_TEMPERATURE_NOT_AVAILABLE) {
-        if (msmt < minTemp)
-            minTemp = msmt;
-        if (msmt > maxTemp)
-            maxTemp = msmt;
-    }
+        if (fabs(msmt - IMU_TEMPERATURE_NOT_AVAILABLE) > TEMP_NA_COMPARE_EPSILON) {
+            if (msmt < minTemp)
+                minTemp = msmt;
+            if (msmt > maxTemp)
+                maxTemp = msmt;
+        }
 #ifndef DISABLE_LOGGING
         Log.infoln(F("Board temperature %D 'C (%D 'F); range [%D - %D] 'C"), msmt, toFahrenheit(msmt), minTemp, maxTemp);
         Log.infoln(F("Current time: %y"), now());
