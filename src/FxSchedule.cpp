@@ -27,6 +27,7 @@ time_t vacationBedTime = DEFAULT_VACATION_BEDTIME;
 uint16_t currentDay = 0;
 
 std::deque<AlarmData*> scheduledAlarms;
+rtos::Mutex alarmMutex;
 
 time_t getBedTime(const time_t startDay, DayType nextDayType) {
     time_t bedTime = startDay;
@@ -170,6 +171,23 @@ void logAlarms() {
 }
 
 /**
+ * Concurrent modification unsafe alarm list clearance - this method is internal only, do not expose outside this file unit
+ */
+void unsafeResetAlarms() {
+    //remove all the alarms, release associated resources
+    for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
+        auto al = *it;
+        it = scheduledAlarms.erase(it);
+        delete al;
+    }
+}
+
+void clearAlarmSchedule() {
+    mbed::ScopedLock<rtos::Mutex> lock(alarmMutex);
+    unsafeResetAlarms();
+}
+
+/**
  * Setup the default sleep/wake-up schedule for the school year
  */
 void setupAlarmSchedule() {
@@ -177,6 +195,7 @@ void setupAlarmSchedule() {
         Log.warningln(F("Cannot setup alarms without WiFi, likely time is not set"));
         return;
     }
+    mbed::ScopedLock<rtos::Mutex> lock(alarmMutex);
     //alarms for today
     time_t time = now();
     currentDay = day(time);
@@ -187,12 +206,7 @@ void setupAlarmSchedule() {
         scheduleDay(previousMidnight(time));
         logAlarms();
         adjustCurrentEffect(time);
-        //remove all the alarms, we'll create the new ones based on the current time
-        for (auto it = scheduledAlarms.begin(); it != scheduledAlarms.end();) {
-            auto al = *it;
-            it = scheduledAlarms.erase(it);
-            delete al;
-        }
+        unsafeResetAlarms();    //remove all the alarms, we'll create the new ones based on the current time
         firstRun = false;
     }
     scheduleDay(time);

@@ -211,7 +211,7 @@ size_t web::handleGetConfig(WiFiClient *client, String *uri, String *hd, String 
     doc["auto"] = fxRegistry.isAutoRoll();
     doc["curEffectName"] = fxRegistry.getCurrentEffect()->name();
     doc["holiday"] = holidayToString(paletteFactory.getHoliday());
-    JsonArray hldList = doc.createNestedArray("holidayList");
+    JsonArray hldList = doc["holidayList"].to<JsonArray>();
     for (uint8_t hi = None; hi <= NewYear; hi++)
         hldList.add(holidayToString(static_cast<Holiday>(hi)));
     char datetime[20];
@@ -220,7 +220,7 @@ size_t web::handleGetConfig(WiFiClient *client, String *uri, String *hd, String 
     bool bDST = isSysStatus(SYS_STATUS_DST);
     doc["currentOffset"] = bDST ? CDT_OFFSET_SECONDS : CST_OFFSET_SECONDS;
     doc["dst"] = bDST;
-    JsonArray fxArray = doc.createNestedArray("fx");
+    JsonArray fxArray = doc["fx"].to<JsonArray>();
     fxRegistry.describeConfig(fxArray);
     //send it out
     sz += serializeJson(doc, *client);
@@ -362,7 +362,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     // response body
     JsonDocument doc;
     // WiFi
-    JsonObject wifi = doc.createNestedObject("wifi");
+    JsonObject wifi = doc["wifi"].to<JsonObject>();
     wifi["IP"] = WiFi.localIP();         //IP Address
     int32_t rssi = WiFi.RSSI();
     wifi["bars"] = barSignalLevel(rssi);  //Wi-Fi signal level
@@ -370,7 +370,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     wifi["curVersion"] = WiFiClass::firmwareVersion();
     wifi["latestVersion"] = WIFI_FIRMWARE_LATEST_VERSION;
     // Fx
-    JsonObject fx = doc.createNestedObject("fx");
+    JsonObject fx = doc["fx"].to<JsonObject>();
     fx["count"] = fxRegistry.size();
     fx[csAuto] = fxRegistry.isAutoRoll();
     fx["asleep"] = fxRegistry.isAsleep();
@@ -378,17 +378,17 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     const LedEffect *curFx = fxRegistry.getCurrentEffect();
     fx["index"] = curFx->getRegistryIndex();
     fx["name"] = curFx->name();
-    JsonArray lastFx = fx.createNestedArray("pastEffects");
+    JsonArray lastFx = fx["pastEffects"].to<JsonArray>();
     fxRegistry.pastEffectsRun(lastFx);                   //ordered earliest to latest (current effect is the last element)
     fx[csBrightness] = stripBrightness;
     fx[csBrightnessLocked] = stripBrightnessLocked;
     fx[csAudioThreshold] = audioBumpThreshold;              //current audio level threshold
     fx["totalAudioBumps"] = totalAudioBumps;                //how many times (in total) have we bumped the effect due to audio level
-    JsonArray audioHist = fx.createNestedArray("audioHist");
+    JsonArray audioHist = fx["audioHist"].to<JsonArray>();
     for (uint16_t x : maxAudio)
         audioHist.add(x);
     // Time
-    JsonObject time = doc.createNestedObject("time");
+    JsonObject time = doc["time"].to<JsonObject>();
     time["ntpSync"] = timeStatus();
     time["millis"] = millis();           //current time in ms
     char timeBuf[21];
@@ -403,21 +403,36 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     time["averageDrift"] = getAverageTimeDrift();
     time["lastDrift"] = getLastTimeDrift();
     time["totalDrift"] = getTotalDrift();
-    JsonArray alarms = time.createNestedArray(csAlarms);
+    JsonArray alarms = time[csAlarms].to<JsonArray>();
     for (const auto &al : scheduledAlarms) {
-        JsonObject jal = alarms.createNestedObject();
+        JsonObject jal = alarms.add<JsonObject>();
         jal["timeLong"] = al->value;
         formatDateTime(timeBuf, al->value);
         jal["timeFmt"] = timeBuf;
         jal["type"] = alarmTypeToString(al->type);
 //        jal["taskPtr"] = (long)al->onEventHandler;
     }
-    JsonObject alarmParams = doc.createNestedObject(csAlarmParams);
-    alarmParams[csWakeupOn] = wakeupTimeOn;
-    alarmParams[csWakeupOff] = wakeupTimeOff;
-    alarmParams[csSchoolDayBedtime] = schoolDayBedTime;
-    alarmParams[csWeekendBedtime] = weekendBedTime;
-    alarmParams[csVacationBedtime] = vacationBedTime;
+    JsonObject alarmParams = doc[csAlarmParams].to<JsonObject>();
+    JsonArray arr = alarmParams[csWakeupOn].to<JsonArray>();
+    formatTime(timeBuf, wakeupTimeOn);
+    arr.add(wakeupTimeOn);
+    arr.add(timeBuf);
+    arr = alarmParams[csWakeupOff].to<JsonArray>();
+    formatTime(timeBuf, wakeupTimeOff);
+    arr.add(wakeupTimeOff);
+    arr.add(timeBuf);
+    arr = alarmParams[csSchoolDayBedtime].to<JsonArray>();
+    formatTime(timeBuf, schoolDayBedTime);
+    arr.add(schoolDayBedTime);
+    arr.add(timeBuf);
+    arr = alarmParams[csWeekendBedtime].to<JsonArray>();
+    formatTime(timeBuf, weekendBedTime);
+    arr.add(weekendBedTime);
+    arr.add(timeBuf);
+    arr = alarmParams[csVacationBedtime].to<JsonArray>();
+    formatTime(timeBuf, vacationBedTime);
+    arr.add(vacationBedTime);
+    arr.add(timeBuf);
 
     snprintf(timeBuf, 9, "%2d.%02d.%02d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     doc["mbedVersion"] = timeBuf;
@@ -463,7 +478,7 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
 
     JsonDocument resp;
     const char strEffect[] = "effect";
-    JsonObject upd = resp.createNestedObject("updates");
+    JsonObject upd = resp["updates"].to<JsonObject>();
     if (doc.containsKey(csAuto)) {
         bool autoAdvance = doc[csAuto].as<bool>();
         fxRegistry.autoRoll(autoAdvance);
@@ -504,7 +519,7 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
             vacationBedTime = alarmParams[csVacationBedtime].as<time_t>();
         //reset and rebuild alarms
         //TODO: watch out for concurrent modification collisions (alarm loop thread, this is web thread) - consider mutex?
-        scheduledAlarms.clear();
+        clearAlarmSchedule();
         setupAlarmSchedule();
     }
 #ifndef DISABLE_LOGGING

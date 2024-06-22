@@ -15,6 +15,7 @@ extern time_t vacationBedTime;
 
 
 void setupAlarmSchedule();
+void clearAlarmSchedule();
 void alarm_loop();
 
 void wakeupOn();

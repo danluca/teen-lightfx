@@ -123,7 +123,7 @@ void readState() {
             schoolDayBedTime = alarmParams[csSchoolDayBedtime].as<time_t>();
             weekendBedTime = alarmParams[csWeekendBedtime].as<time_t>();
             vacationBedTime = alarmParams[csVacationBedtime].as<time_t>();
-            Log.infoln(F("Alarm parameters restored as: wakeupTimeOn=%y, wakeupTimeOff=%y, schoolDayBedTime=%y, weekendBedTime=%y, vacationBedTime=%y"),
+            Log.infoln(F("Alarm parameters restored as: wakeupTimeOn=%z, wakeupTimeOff=%z, schoolDayBedTime=%z, weekendBedTime=%z, vacationBedTime=%z"),
                        wakeupTimeOn, wakeupTimeOff, schoolDayBedTime, weekendBedTime, vacationBedTime);
         }
 
@@ -141,7 +141,7 @@ void saveState() {
     doc[csAudioThreshold] = audioBumpThreshold;
     doc[csColorTheme] = holidayToString(paletteFactory.getHoliday());
     doc[csAutoColorAdjust] = paletteFactory.isAuto();
-    JsonObject alarmParams = doc.createNestedObject(csAlarmParams);
+    JsonObject alarmParams = doc[csAlarmParams].to<JsonObject>();
     alarmParams[csWakeupOn] = wakeupTimeOn;
     alarmParams[csWakeupOff] = wakeupTimeOff;
     alarmParams[csSchoolDayBedtime] = schoolDayBedTime;
@@ -901,7 +901,7 @@ LedEffect::LedEffect(const char *description) : state(Idle), desc(description) {
 }
 
 JsonObject &LedEffect::describeConfig(JsonArray &json) const {
-    JsonObject obj = json.createNestedObject();
+    JsonObject obj = json.add<JsonObject>();
     baseConfig(obj);
     return obj;
 }
