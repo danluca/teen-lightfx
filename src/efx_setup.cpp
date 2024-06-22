@@ -5,7 +5,6 @@
 #include "log.h"
 
 //~ Global variables definition
-#define STATE_JSON_DOC_SIZE   512
 const uint8_t dimmed = 20;
 const char csAutoFxRoll[] PROGMEM = "autoFxRoll";
 const char csStripBrightness[] PROGMEM = "stripBrightness";
@@ -19,6 +18,13 @@ const char csBrightnessLocked[] PROGMEM = "brightnessLocked";
 const char csAuto[] PROGMEM = "auto";
 const char csHoliday[] PROGMEM = "holiday";
 const char strNR[] PROGMEM = "N/R";
+const char *const csAlarms PROGMEM = "alarms";
+const char *const csAlarmParams PROGMEM = "alarmParams";
+const char *const csWakeupOn PROGMEM = "wakeupOn";
+const char *const csWakeupOff PROGMEM = "wakeupOff";
+const char *const csSchoolDayBedtime PROGMEM = "schoolBedtime";
+const char *const csWeekendBedtime PROGMEM = "weekendBedtime";
+const char *const csVacationBedtime PROGMEM = "vacationBedtime";
 
 
 //const uint16_t FRAME_SIZE = 68;     //NOTE: frame size must be at least 3 times less than NUM_PIXELS. The frame CRGBSet must fit at least 3 frames
@@ -90,7 +96,7 @@ void readState() {
     String json;
     size_t stateSize = readTextFile(stateFileName, &json);
     if (stateSize > 0) {
-        StaticJsonDocument<STATE_JSON_DOC_SIZE> doc; //this takes memory from the thread stack, ensure fx thread's memory size is adjusted if this value is
+        JsonDocument doc; //this takes memory from the thread stack, ensure fx thread's memory size is adjusted if this value is
         deserializeJson(doc, json);
 
         bool autoAdvance = doc[csAutoFxRoll].as<bool>();
@@ -110,6 +116,16 @@ void readState() {
         paletteFactory.setHoliday(parseHoliday(&savedHoliday));
         bool autoColAdj = doc[csAutoColorAdjust].as<bool>();
         paletteFactory.setAuto(autoColAdj);
+        if (doc.containsKey(csAlarmParams)) {
+            JsonObject alarmParams = doc[csAlarms].as<JsonObject>();
+            wakeupTimeOn = alarmParams[csWakeupOn].as<time_t>();
+            wakeupTimeOff = alarmParams[csWakeupOff].as<time_t>();
+            schoolDayBedTime = alarmParams[csSchoolDayBedtime].as<time_t>();
+            weekendBedTime = alarmParams[csWeekendBedtime].as<time_t>();
+            vacationBedTime = alarmParams[csVacationBedtime].as<time_t>();
+            Log.infoln(F("Alarm parameters restored as: wakeupTimeOn=%y, wakeupTimeOff=%y, schoolDayBedTime=%y, weekendBedTime=%y, vacationBedTime=%y"),
+                       wakeupTimeOn, wakeupTimeOff, schoolDayBedTime, weekendBedTime, vacationBedTime);
+        }
 
         Log.infoln(F("System state restored from %s [%d bytes]: autoFx=%T, randomSeed=%d, nextEffect=%d, brightness=%d (auto adjust), audioBumpThreshold=%d, holiday=%s (auto=%T)"),
                    stateFileName, stateSize, autoAdvance, seed, fx, stripBrightness, audioBumpThreshold, holidayToString(paletteFactory.getHoliday()), paletteFactory.isAuto());
@@ -117,7 +133,7 @@ void readState() {
 }
 
 void saveState() {
-    StaticJsonDocument<STATE_JSON_DOC_SIZE> doc;    //this takes memory from the thread stack, ensure fx thread's memory size is adjusted if this value is
+    JsonDocument doc;    //this takes memory from the thread stack, ensure fx thread's memory size is adjusted if this value is
     doc[csRandomSeed] = random16_get_seed();
     doc[csAutoFxRoll] = fxRegistry.isAutoRoll();
     doc[csCurFx] = fxRegistry.curEffectPos();
@@ -125,6 +141,12 @@ void saveState() {
     doc[csAudioThreshold] = audioBumpThreshold;
     doc[csColorTheme] = holidayToString(paletteFactory.getHoliday());
     doc[csAutoColorAdjust] = paletteFactory.isAuto();
+    JsonObject alarmParams = doc.createNestedObject(csAlarmParams);
+    alarmParams[csWakeupOn] = wakeupTimeOn;
+    alarmParams[csWakeupOff] = wakeupTimeOff;
+    alarmParams[csSchoolDayBedtime] = schoolDayBedTime;
+    alarmParams[csWeekendBedtime] = weekendBedTime;
+    alarmParams[csVacationBedtime] = vacationBedTime;
     String str;
     serializeJson(doc, str);
     if (!writeTextFile(stateFileName, &str))

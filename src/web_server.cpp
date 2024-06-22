@@ -155,7 +155,7 @@ size_t web::handleGetWifi(WiFiClient *client, String *uri, String *hd, String *b
     sz += client->println();    //done with headers
 
     // response body
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
 
     //MAC address
     uint8_t mac[WL_MAC_ADDR_LENGTH];
@@ -201,7 +201,7 @@ size_t web::handleGetConfig(WiFiClient *client, String *uri, String *hd, String 
     sz += client->println();    //done with headers
 
     // response body
-    StaticJsonDocument<4098> doc;
+    JsonDocument doc;
 
     doc["boardName"] = BOARD_NAME;
     doc["fwVersion"] = BUILD_VERSION;
@@ -360,7 +360,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     sz += client->println();    //done with headers
 
     // response body
-    StaticJsonDocument<1408> doc;
+    JsonDocument doc;
     // WiFi
     JsonObject wifi = doc.createNestedObject("wifi");
     wifi["IP"] = WiFi.localIP();         //IP Address
@@ -403,7 +403,7 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     time["averageDrift"] = getAverageTimeDrift();
     time["lastDrift"] = getLastTimeDrift();
     time["totalDrift"] = getTotalDrift();
-    JsonArray alarms = time.createNestedArray("alarms");
+    JsonArray alarms = time.createNestedArray(csAlarms);
     for (const auto &al : scheduledAlarms) {
         JsonObject jal = alarms.createNestedObject();
         jal["timeLong"] = al->value;
@@ -412,6 +412,12 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
         jal["type"] = alarmTypeToString(al->type);
 //        jal["taskPtr"] = (long)al->onEventHandler;
     }
+    JsonObject alarmParams = doc.createNestedObject(csAlarmParams);
+    alarmParams[csWakeupOn] = wakeupTimeOn;
+    alarmParams[csWakeupOff] = wakeupTimeOff;
+    alarmParams[csSchoolDayBedtime] = schoolDayBedTime;
+    alarmParams[csWeekendBedtime] = weekendBedTime;
+    alarmParams[csVacationBedtime] = vacationBedTime;
 
     snprintf(timeBuf, 9, "%2d.%02d.%02d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     doc["mbedVersion"] = timeBuf;
@@ -450,12 +456,12 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
  */
 size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String *bdy) {
     //process the body - parse JSON body and react to inputs
-    DynamicJsonDocument doc(512);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, *bdy);
     if (error)
         return handleInternalError(client, uri, error.c_str());
 
-    StaticJsonDocument<128> resp;
+    JsonDocument resp;
     const char strEffect[] = "effect";
     JsonObject upd = resp.createNestedObject("updates");
     if (doc.containsKey(csAuto)) {
@@ -483,6 +489,23 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
     if (doc.containsKey(csAudioThreshold)) {
         audioBumpThreshold = doc[csAudioThreshold].as<uint16_t>();
         upd[csAudioThreshold] = audioBumpThreshold;
+    }
+    if (doc.containsKey(csAlarmParams)) {
+        JsonObject alarmParams = doc[csAlarmParams].as<JsonObject>();
+        if (alarmParams.containsKey(csWakeupOn))
+            wakeupTimeOn = alarmParams[csWakeupOn].as<time_t>();
+        if (alarmParams.containsKey(csWakeupOff))
+            wakeupTimeOff = alarmParams[csWakeupOff].as<time_t>();
+        if (alarmParams.containsKey(csSchoolDayBedtime))
+            schoolDayBedTime = alarmParams[csSchoolDayBedtime].as<time_t>();
+        if (alarmParams.containsKey(csWeekendBedtime))
+            weekendBedTime = alarmParams[csWeekendBedtime].as<time_t>();
+        if (alarmParams.containsKey(csVacationBedtime))
+            vacationBedTime = alarmParams[csVacationBedtime].as<time_t>();
+        //reset and rebuild alarms
+        //TODO: watch out for concurrent modification collisions (alarm loop thread, this is web thread) - consider mutex?
+        scheduledAlarms.clear();
+        setupAlarmSchedule();
     }
 #ifndef DISABLE_LOGGING
     Log.infoln(F("FX: Current running effect updated to %u, autoswitch %T, holiday %s, brightness %u, brightness adjustment %s"),
@@ -524,7 +547,7 @@ size_t web::handleInternalError(WiFiClient *client, String *uri, const char *mes
     sz += client->println();
 
     //response body
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     doc["serverIP"] = WiFi.localIP();
     doc["uri"] = uri->c_str();
     doc["errorCode"] = 500;
@@ -555,7 +578,7 @@ size_t web::handleNotFoundError(WiFiClient *client, String *uri, const char *mes
     sz += client->println();
 
     //response body
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     doc["serverIP"] = WiFi.localIP();
     doc["uri"] = uri->c_str();
     doc["errorCode"] = 404;

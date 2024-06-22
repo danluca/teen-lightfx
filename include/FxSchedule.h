@@ -7,6 +7,13 @@
 #include <deque>
 #include "Arduino.h"
 
+extern time_t wakeupTimeOn;
+extern time_t wakeupTimeOff;
+extern time_t schoolDayBedTime;
+extern time_t weekendBedTime;
+extern time_t vacationBedTime;
+
+
 void setupAlarmSchedule();
 void alarm_loop();
 

@@ -38,6 +38,14 @@ extern const char csBrightnessLocked[];
 extern const char csAuto[];
 extern const char csHoliday[];
 extern const char strNR[];
+extern const char *const csAlarms;
+extern const char *const csAlarmParams;
+extern const char *const csWakeupOn;
+extern const char *const csWakeupOff;
+extern const char *const csSchoolDayBedtime;
+extern const char *const csWeekendBedtime;
+extern const char *const csVacationBedtime;
+
 
 extern const uint8_t dimmed;
 //extern const uint16_t FRAME_SIZE;
