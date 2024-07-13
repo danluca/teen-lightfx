@@ -352,7 +352,7 @@ size_t web::handleGetRoot(WiFiClient *client, String *uri, String *hd, String *b
  * @param time time value to format (time only)
  * @return reference to the JSON object
  */
-JsonObject& setTimeJson(JsonObject &obj, const char const* key, const time_t time) {
+JsonObject& setTimeJson(JsonObject &obj, const char* const key, const time_t time) {
     char timeBuf[16];
     formatTime(timeBuf, time);
     obj[key] = timeBuf;
