@@ -100,7 +100,7 @@ footer {
 #status div p span {
     color: #7f7f7f;
 }
-#schAlarms ul {
+#schAlarms ul, #alarmParams ul {
     padding-left: 2em;
 }
 .status-ok {
