@@ -103,6 +103,16 @@ function getStatus() {
             data.time.alarms.forEach(al =>  strAlarms += `<li>${al.timeFmt} (${al.type})</li>`);
             $('#schAlarms').html(`${strAlarms.length > 0 ? "<br/><ul>"+strAlarms+"</ul>" : ": None"}`);
 
+            strAlarms = `<li>Wake-up start: ${data.alarmParams.wakeupOn.timeFmt} </li>`
+            strAlarms += `<li>Wake-up end: ${data.alarmParams.wakeupOff.timeFmt}</li>`
+            strAlarms += `<li>Bedtime:<br/><ul>`;
+            strAlarms += `<li>Schoolday: ${data.alarmParams.schoolBedtime.timeFmt}</li>`;
+            strAlarms += `<li>Week-end: ${data.alarmParams.weekendBedtime.timeFmt}</li>`;
+            strAlarms += `<li>Vacation: ${data.alarmParams.vacationBedtime.timeFmt}</li>`;
+            strAlarms += `<li>Sleep-in: 02:00:00</li>`;     //this is hard-coded in the code to this value
+            strAlarms += "</ul></li>";
+            $('#alarmParams').html(`<br/><ul>${strAlarms}</ul>`);
+
             //update the current effect tiles as well
             $('#curEffectId').html(`index: ${data.fx.index}`);
             let desc = config?.fx?.find(x=> x.registryIndex === data.fx.index)?.description ?? "N/A";
