@@ -37,6 +37,10 @@ static const char msgRequestNotMapped[] PROGMEM = "URI not mapped to a handler o
 static const char configJsonFilename[] PROGMEM = "config.json";
 static const char wifiJsonFilename[] PROGMEM = "wifi.json";
 static const char statusJsonFilename[] PROGMEM = "status.json";
+static const char csTimeLong[] PROGMEM = "timeLong";
+static const char csTimeFmt[] PROGMEM = "timeFmt";
+static const char csType[] PROGMEM = "type";
+static const char csEffect[] PROGMEM = "effect";
 
 /**
  * Web handler mappings - static in nature and stored in flash
@@ -342,6 +346,20 @@ size_t web::handleGetRoot(WiFiClient *client, String *uri, String *hd, String *b
 }
 
 /**
+ * Utility to format a time and set it under a JSON object field
+ * @param obj JSON object
+ * @param key name of the field to store the formatted time
+ * @param time time value to format (time only)
+ * @return reference to the JSON object
+ */
+JsonObject& setTimeJson(JsonObject &obj, const char const* key, const time_t time) {
+    char timeBuf[16];
+    formatTime(timeBuf, time);
+    obj[key] = timeBuf;
+    return obj;
+}
+
+/**
  * Handles <code>GET /status.json</code> - responds with JSON document containing current status of the system: WiFi, current effect, time
  * <p>Must comply with the <code>reqHandler</code> function pointer signature</p>
  * @param client the web client to respond to
@@ -406,33 +424,28 @@ size_t web::handleGetStatus(WiFiClient *client, String *uri, String *hd, String 
     JsonArray alarms = time[csAlarms].to<JsonArray>();
     for (const auto &al : scheduledAlarms) {
         JsonObject jal = alarms.add<JsonObject>();
-        jal["timeLong"] = al->value;
+        jal[csTimeLong] = al->value;
         formatDateTime(timeBuf, al->value);
-        jal["timeFmt"] = timeBuf;
-        jal["type"] = alarmTypeToString(al->type);
+        jal[csTimeFmt] = timeBuf;
+        jal[csType] = alarmTypeToString(al->type);
 //        jal["taskPtr"] = (long)al->onEventHandler;
     }
     JsonObject alarmParams = doc[csAlarmParams].to<JsonObject>();
-    JsonArray arr = alarmParams[csWakeupOn].to<JsonArray>();
-    formatTime(timeBuf, wakeupTimeOn);
-    arr.add(wakeupTimeOn);
-    arr.add(timeBuf);
-    arr = alarmParams[csWakeupOff].to<JsonArray>();
-    formatTime(timeBuf, wakeupTimeOff);
-    arr.add(wakeupTimeOff);
-    arr.add(timeBuf);
-    arr = alarmParams[csSchoolDayBedtime].to<JsonArray>();
-    formatTime(timeBuf, schoolDayBedTime);
-    arr.add(schoolDayBedTime);
-    arr.add(timeBuf);
-    arr = alarmParams[csWeekendBedtime].to<JsonArray>();
-    formatTime(timeBuf, weekendBedTime);
-    arr.add(weekendBedTime);
-    arr.add(timeBuf);
-    arr = alarmParams[csVacationBedtime].to<JsonArray>();
-    formatTime(timeBuf, vacationBedTime);
-    arr.add(vacationBedTime);
-    arr.add(timeBuf);
+    JsonObject alObj = alarmParams[csWakeupOn].to<JsonObject>();
+    alObj[csTimeLong] = wakeupTimeOn;
+    setTimeJson(alObj, csTimeFmt, wakeupTimeOn);
+    alObj = alarmParams[csWakeupOff].to<JsonObject>();
+    alObj[csTimeLong] = wakeupTimeOff;
+    setTimeJson(alObj, csTimeFmt, wakeupTimeOff);
+    alObj = alarmParams[csSchoolDayBedtime].to<JsonObject>();
+    alObj[csTimeLong] = schoolDayBedTime;
+    setTimeJson(alObj, csTimeFmt, schoolDayBedTime);
+    alObj = alarmParams[csWeekendBedtime].to<JsonObject>();
+    alObj[csTimeLong] = weekendBedTime;
+    setTimeJson(alObj, csTimeFmt, weekendBedTime);
+    alObj = alarmParams[csVacationBedtime].to<JsonObject>();
+    alObj[csTimeLong] = vacationBedTime;
+    setTimeJson(alObj, csTimeFmt, vacationBedTime);
 
     snprintf(timeBuf, 9, "%2d.%02d.%02d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
     doc["mbedVersion"] = timeBuf;
@@ -477,17 +490,16 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
         return handleInternalError(client, uri, error.c_str());
 
     JsonDocument resp;
-    const char strEffect[] = "effect";
     JsonObject upd = resp["updates"].to<JsonObject>();
     if (doc.containsKey(csAuto)) {
         bool autoAdvance = doc[csAuto].as<bool>();
         fxRegistry.autoRoll(autoAdvance);
         upd[csAuto] = autoAdvance;
     }
-    if (doc.containsKey(strEffect)) {
-        uint16_t nextFx = doc[strEffect].as<uint16_t >();
+    if (doc.containsKey(csEffect)) {
+        uint16_t nextFx = doc[csEffect].as<uint16_t >();
         fxRegistry.nextEffectPos(nextFx);
-        upd[strEffect] = nextFx;
+        upd[csEffect] = nextFx;
     }
     if (doc.containsKey(csHoliday)) {
         String userHoliday = doc[csHoliday].as<String>();
@@ -507,18 +519,28 @@ size_t web::handlePutConfig(WiFiClient *client, String *uri, String *hd, String 
     }
     if (doc.containsKey(csAlarmParams)) {
         JsonObject alarmParams = doc[csAlarmParams].as<JsonObject>();
-        if (alarmParams.containsKey(csWakeupOn))
+        JsonObject alParUpd = upd[csAlarmParams].to<JsonObject>();
+        if (alarmParams.containsKey(csWakeupOn)) {
             wakeupTimeOn = alarmParams[csWakeupOn].as<time_t>();
-        if (alarmParams.containsKey(csWakeupOff))
+            setTimeJson(alParUpd, csWakeupOn, wakeupTimeOn);
+        }
+        if (alarmParams.containsKey(csWakeupOff)) {
             wakeupTimeOff = alarmParams[csWakeupOff].as<time_t>();
-        if (alarmParams.containsKey(csSchoolDayBedtime))
+            setTimeJson(alParUpd, csWakeupOff, wakeupTimeOff);
+        }
+        if (alarmParams.containsKey(csSchoolDayBedtime)) {
             schoolDayBedTime = alarmParams[csSchoolDayBedtime].as<time_t>();
-        if (alarmParams.containsKey(csWeekendBedtime))
+            setTimeJson(alParUpd, csSchoolDayBedtime, schoolDayBedTime);
+        }
+        if (alarmParams.containsKey(csWeekendBedtime)) {
             weekendBedTime = alarmParams[csWeekendBedtime].as<time_t>();
-        if (alarmParams.containsKey(csVacationBedtime))
+            setTimeJson(alParUpd, csWeekendBedtime, weekendBedTime);
+        }
+        if (alarmParams.containsKey(csVacationBedtime)) {
             vacationBedTime = alarmParams[csVacationBedtime].as<time_t>();
+            setTimeJson(alParUpd, csVacationBedtime, vacationBedTime);
+        }
         //reset and rebuild alarms
-        //TODO: watch out for concurrent modification collisions (alarm loop thread, this is web thread) - consider mutex?
         clearAlarmSchedule();
         setupAlarmSchedule();
     }

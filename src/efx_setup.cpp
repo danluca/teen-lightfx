@@ -117,7 +117,7 @@ void readState() {
         bool autoColAdj = doc[csAutoColorAdjust].as<bool>();
         paletteFactory.setAuto(autoColAdj);
         if (doc.containsKey(csAlarmParams)) {
-            JsonObject alarmParams = doc[csAlarms].as<JsonObject>();
+            JsonObject alarmParams = doc[csAlarmParams].as<JsonObject>();
             wakeupTimeOn = alarmParams[csWakeupOn].as<time_t>();
             wakeupTimeOff = alarmParams[csWakeupOff].as<time_t>();
             schoolDayBedTime = alarmParams[csSchoolDayBedtime].as<time_t>();
